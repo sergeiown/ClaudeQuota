@@ -5,7 +5,7 @@ const { app, nativeTheme } = require('electron');
 const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
-const { isAutoLaunchEnabled, setAutoLaunchEnabled } = require('./autostart');
+const { isAutoLaunchEnabled, setAutoLaunchEnabled, enableAutoLaunchOnFirstRun } = require('./autostart');
 const { showAboutDialog } = require('./about');
 
 // Tray-only app: no BrowserWindow is ever created, so Electron's default
@@ -35,6 +35,8 @@ if (!gotLock) {
 
 function bootstrap() {
   log.info('ClaudeQuota starting', app.getVersion());
+
+  enableAutoLaunchOnFirstRun();
 
   const tray = createTrayController({
     isDark: nativeTheme.shouldUseDarkColors,

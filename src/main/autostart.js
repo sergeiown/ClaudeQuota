@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { app } = require('electron');
 
 /**
@@ -24,7 +26,30 @@ function setAutoLaunchEnabled(enabled) {
   app.setLoginItemSettings({ openAtLogin: enabled });
 }
 
+function firstRunMarkerPath() {
+  return path.join(app.getPath('userData'), 'first-run-complete');
+}
+
+/**
+ * Turns autostart on exactly once, the very first time the app is ever
+ * launched (typically right after a fresh install, since electron-builder's
+ * NSIS installer launches the app on completion). Does nothing on every
+ * later launch, and never overrides a user who has since turned it back
+ * off via the tray menu - that's a real toggle from then on, this only
+ * picks its initial default.
+ */
+function enableAutoLaunchOnFirstRun() {
+  const markerPath = firstRunMarkerPath();
+  if (fs.existsSync(markerPath)) return;
+
+  setAutoLaunchEnabled(true);
+
+  fs.mkdirSync(path.dirname(markerPath), { recursive: true });
+  fs.writeFileSync(markerPath, new Date().toISOString());
+}
+
 module.exports = {
   isAutoLaunchEnabled,
   setAutoLaunchEnabled,
+  enableAutoLaunchOnFirstRun,
 };
