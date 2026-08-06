@@ -2,6 +2,7 @@
 
 const { app, nativeTheme } = require('electron');
 
+const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
 const { isAutoLaunchEnabled, setAutoLaunchEnabled } = require('./autostart');
@@ -13,6 +14,9 @@ const { showAboutDialog } = require('./about');
 // "Вихід" menu item, wired up below.
 
 let poller = null;
+
+process.on('uncaughtException', (err) => log.error('uncaughtException', err));
+process.on('unhandledRejection', (err) => log.error('unhandledRejection', err));
 
 const gotLock = app.requestSingleInstanceLock();
 
@@ -30,6 +34,8 @@ if (!gotLock) {
 }
 
 function bootstrap() {
+  log.info('ClaudeQuota starting', app.getVersion());
+
   const tray = createTrayController({
     isDark: nativeTheme.shouldUseDarkColors,
     getAutoLaunchEnabled: isAutoLaunchEnabled,
@@ -40,8 +46,19 @@ function bootstrap() {
   });
 
   poller = createUsagePoller({
-    onSnapshot: (snapshot) => tray.showSnapshot(snapshot),
-    onStatus: (status) => tray.showStatus(status),
+    onSnapshot: (snapshot) => {
+      log.info('usage snapshot', {
+        fiveHour: snapshot.fiveHour && snapshot.fiveHour.utilization,
+        sevenDay: snapshot.sevenDay && snapshot.sevenDay.utilization,
+      });
+      tray.showSnapshot(snapshot);
+    },
+    onStatus: (status, detail) => {
+      // Never log tokens themselves - only status codes/messages/bodies,
+      // which is all `detail` ever contains (see poller.js).
+      log.warn('usage poller status', status, detail || '');
+      tray.showStatus(status);
+    },
   });
 
   nativeTheme.on('updated', () => {
