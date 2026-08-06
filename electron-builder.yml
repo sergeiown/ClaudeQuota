@@ -22,3 +22,8 @@ nsis:
 asarUnpack:
   - node_modules/@napi-rs/canvas/**/*
   - node_modules/@napi-rs/canvas-win32-x64-msvc/**/*
+
+publish:
+  provider: github
+  owner: sergeiown
+  repo: ClaudeQuota

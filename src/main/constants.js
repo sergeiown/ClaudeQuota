@@ -31,7 +31,7 @@ const TOKEN_REFRESH_SKEW_MS = 5 * 60_000;
 
 const CREDENTIALS_PATH = path.join(os.homedir(), '.claude', '.credentials.json');
 
-const REPO_URL = '';
+const REPO_URL = 'https://github.com/sergeiown/ClaudeQuota';
 
 module.exports = {
   USAGE_API_URL,
