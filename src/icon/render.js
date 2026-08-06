@@ -4,22 +4,71 @@ const { createCanvas } = require('@napi-rs/canvas');
 const { getPalette } = require('./theme');
 
 /**
- * Renders a diagonal-slash fraction ("10/20") to a PNG buffer - numerator
- * raised to the upper right, denominator lowered to the lower left of the
- * slash, matching classic typographic fraction layout. No Electron
- * dependency here on purpose, so this (and scripts/preview-icon.js) runs
- * under plain `node`.
+ * Hand-drawn 3x5 dot-matrix digits, drawn as filled pixel-aligned squares
+ * rather than a scalable font.
  *
- * No "%" signs here - verified via scripts/preview-icon.js that they clip
- * at both 16px and 32px once combined with two-digit numbers and the
- * slash. The percentage is spelled out in the tray tooltip instead.
+ * Real-world feedback on two earlier text-based versions (Segoe UI, both a
+ * right/left-aligned layout and a centered fit-to-width one) was that the
+ * digits were too small and blurry to read at actual tray size - a
+ * vector font's anti-aliasing is exactly what makes native monochrome
+ * tray icons (network/volume/battery) look crisp instead of mushy at 16px:
+ * they're pixel-perfect bitmaps, not tiny anti-aliased text. This draws
+ * digits the same way.
+ */
+const DIGIT_PATTERNS = {
+  0: ['111', '101', '101', '101', '111'],
+  1: ['010', '110', '010', '010', '111'],
+  2: ['111', '001', '111', '100', '111'],
+  3: ['111', '001', '111', '001', '111'],
+  4: ['101', '101', '111', '001', '001'],
+  5: ['111', '100', '111', '001', '111'],
+  6: ['111', '100', '111', '101', '111'],
+  7: ['111', '001', '001', '001', '001'],
+  8: ['111', '101', '111', '101', '111'],
+  9: ['111', '101', '111', '001', '111'],
+};
+
+const DIGIT_COLS = 3;
+const DIGIT_ROWS = 5;
+const DIGIT_GAP_COLS = 1;
+
+function drawDigit(ctx, digit, originX, originY, cell) {
+  const pattern = DIGIT_PATTERNS[digit];
+  for (let row = 0; row < DIGIT_ROWS; row++) {
+    for (let col = 0; col < DIGIT_COLS; col++) {
+      if (pattern[row][col] === '1') {
+        ctx.fillRect(originX + col * cell, originY + row * cell, cell, cell);
+      }
+    }
+  }
+}
+
+function drawNumberRow(ctx, text, centerX, originY, cell) {
+  const digits = text.split('').map(Number);
+  const rowWidthCells = digits.length * DIGIT_COLS + (digits.length - 1) * DIGIT_GAP_COLS;
+  let x = Math.round(centerX - (rowWidthCells * cell) / 2);
+  for (const digit of digits) {
+    drawDigit(ctx, digit, x, originY, cell);
+    x += (DIGIT_COLS + DIGIT_GAP_COLS) * cell;
+  }
+}
+
+/**
+ * Renders a stacked fraction ("10/20") to a PNG buffer using the pixel
+ * digit font above - numerator on top, denominator on the bottom,
+ * separated by a thin horizontal divider. No Electron dependency here on
+ * purpose, so this (and scripts/preview-icon.js) runs under plain `node`.
  *
- * Numbers are always zero-padded to 2 digits ("05", not "5"). Verified via
- * scripts/preview-icon.js that un-padded single digits collapse into an
- * illegible blob with the slash at 16px - there just isn't enough text
- * width to keep clear of it. Padding keeps every value the same width the
- * two-digit case was already tuned for. 100 is the one value that doesn't
- * fit that padding (3 digits) - it gets a smaller font instead of clipping.
+ * The layout is built entirely from integer pixel-cell math (`cell =
+ * size / 16`, so exactly 1px per cell at 16px and 2px at 32px) - every
+ * rectangle lands on a whole pixel, so there is no anti-aliasing blur at
+ * any supported icon size.
+ *
+ * No "%" signs - verified via scripts/preview-icon.js on the earlier
+ * text-based version that they clip once combined with two-digit numbers;
+ * the percentage is spelled out in the tray tooltip instead. Numbers are
+ * always zero-padded to 2 digits ("05", not "5") so row width - and
+ * therefore centering - stays identical between updates.
  *
  * @param {object} opts
  * @param {number} opts.numerator 0-100
@@ -33,43 +82,42 @@ function renderFractionIcon({ numerator, denominator, size, isDark }) {
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
+  ctx.imageSmoothingEnabled = false;
 
+  const cell = size / 16;
+  // Zero-padded to 2 digits so row width (and therefore centering) stays
+  // identical between updates. 100 is the one value 3 digits wide instead
+  // of 2 - drawNumberRow's centering math handles that width automatically,
+  // it just ends up a little wider than the 2-digit case.
   const numText = String(numerator).padStart(2, '0');
   const denText = String(denominator).padStart(2, '0');
 
-  const numberFontSize = Math.round(size * 0.42);
-  const slashFontSize = Math.round(size * 0.8);
-
-  // Diagonal slash first, underneath the numbers - most fonts already
-  // render "/" as a glyph spanning most of the em height, which reads as
-  // a fraction bar when the numbers straddle it.
-  ctx.font = `${slashFontSize}px Segoe UI`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = palette.separator;
-  ctx.fillText('/', size * 0.5, size * 0.52);
+  // Vertical layout in 16 cells total: 1 margin + 5 digit + 1 gap +
+  // 1 separator + 1 gap + 5 digit + 1 margin = 16, exactly filling the
+  // icon at any size with no leftover/overflow.
+  const topRowY = 1 * cell;
+  const separatorY = 7 * cell;
+  const bottomRowY = 9 * cell;
 
   ctx.fillStyle = palette.foreground;
+  drawNumberRow(ctx, numText, size / 2, topRowY, cell);
+  drawNumberRow(ctx, denText, size / 2, bottomRowY, cell);
 
-  // 100 is 3 digits where every other value is exactly 2 - shrink just
-  // that piece rather than let it overflow past the icon edge.
-  ctx.font = `bold ${numText.length > 2 ? Math.round(numberFontSize * 0.72) : numberFontSize}px Segoe UI`;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(numText, size * 0.66, size * 0.44);
-
-  ctx.font = `bold ${denText.length > 2 ? Math.round(numberFontSize * 0.72) : numberFontSize}px Segoe UI`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(denText, size * 0.34, size * 0.86);
+  ctx.fillStyle = palette.separator;
+  ctx.fillRect(2 * cell, separatorY, 12 * cell, cell);
 
   return canvas.toBuffer('image/png');
 }
 
-const STATUS_SYMBOLS = {
-  'missing-credentials': '?',
-  'auth-error': '!',
-  loading: '…', // ellipsis
+/**
+ * Same 3x5 pixel font, used for single-character status glyphs so they
+ * stay visually consistent with the fraction icon instead of switching
+ * back to blurry vector text.
+ */
+const STATUS_PATTERNS = {
+  'missing-credentials': ['111', '001', '011', '000', '010'], // "?"
+  'auth-error': ['010', '010', '010', '000', '010'], // "!"
+  loading: ['000', '000', '000', '000', '101'], // ".."
 };
 
 /**
@@ -87,12 +135,21 @@ function renderStatusIcon({ kind, size, isDark }) {
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
+  ctx.imageSmoothingEnabled = false;
 
-  ctx.font = `bold ${Math.round(size * 0.7)}px Segoe UI`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  const cell = size / 8;
+  const pattern = STATUS_PATTERNS[kind] || STATUS_PATTERNS['missing-credentials'];
   ctx.fillStyle = kind === 'auth-error' ? palette.errorForeground : palette.foreground;
-  ctx.fillText(STATUS_SYMBOLS[kind] || '?', size * 0.5, size * 0.54);
+
+  const originX = Math.round(size / 2 - (DIGIT_COLS * cell) / 2);
+  const originY = Math.round(size / 2 - (DIGIT_ROWS * cell) / 2);
+  for (let row = 0; row < DIGIT_ROWS; row++) {
+    for (let col = 0; col < DIGIT_COLS; col++) {
+      if (pattern[row][col] === '1') {
+        ctx.fillRect(originX + col * cell, originY + row * cell, cell, cell);
+      }
+    }
+  }
 
   return canvas.toBuffer('image/png');
 }
