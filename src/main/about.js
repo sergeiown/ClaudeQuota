@@ -15,7 +15,7 @@ async function showAboutDialog() {
     title: 'About ClaudeQuota',
     message: `ClaudeQuota v${app.getVersion()}`,
     detail:
-      'Shows your Claude 5-hour and weekly limit usage via the Anthropic API (/api/oauth/usage), using credentials saved locally by the Claude Code CLI (~/.claude/.credentials.json). Data is sent nowhere except api.anthropic.com.',
+      'Tray monitor for your Claude 5-hour and weekly usage limits. Uses your local Claude Code CLI session - nothing leaves your machine except calls to api.anthropic.com.',
     buttons,
     defaultId: 0,
     cancelId: 0,
