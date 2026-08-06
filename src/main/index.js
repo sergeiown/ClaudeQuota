@@ -7,11 +7,12 @@ const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
 const { isAutoLaunchEnabled, setAutoLaunchEnabled, enableAutoLaunchOnFirstRun } = require('./autostart');
 const { showAboutDialog } = require('./about');
+const { initAutoUpdater, quitOrInstall } = require('./updater');
 
 // Tray-only app: no BrowserWindow is ever created, so Electron's default
 // "quit when all windows are closed" never triggers (there's no window to
-// close in the first place). The only place app.quit() is called is the
-// "Quit" menu item, wired up below.
+// close in the first place). The only place app.quit()/quitAndInstall() is
+// called is the "Quit" menu item (via updater.quitOrInstall), wired up below.
 
 let poller = null;
 
@@ -43,7 +44,7 @@ function bootstrap() {
     getAutoLaunchEnabled: isAutoLaunchEnabled,
     onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
     onAbout: showAboutDialog,
-    onQuit: () => app.quit(),
+    onQuit: quitOrInstall,
     onRequestRefresh: () => poller && poller.requestImmediateCheck(),
   });
 
@@ -68,6 +69,7 @@ function bootstrap() {
   });
 
   poller.start();
+  initAutoUpdater();
 
   app.on('before-quit', () => {
     poller.stop();
