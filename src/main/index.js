@@ -11,7 +11,7 @@ const { showAboutDialog } = require('./about');
 // Tray-only app: no BrowserWindow is ever created, so Electron's default
 // "quit when all windows are closed" never triggers (there's no window to
 // close in the first place). The only place app.quit() is called is the
-// "Вихід" menu item, wired up below.
+// "Quit" menu item, wired up below.
 
 let poller = null;
 

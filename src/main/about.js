@@ -8,14 +8,14 @@ const { REPO_URL } = require('./constants');
  * this is the entire "About" UI for the app.
  */
 async function showAboutDialog() {
-  const buttons = REPO_URL ? ['Закрити', 'Репозиторій на GitHub'] : ['Закрити'];
+  const buttons = REPO_URL ? ['Close', 'Repository on GitHub'] : ['Close'];
 
   const result = await dialog.showMessageBox({
     type: 'info',
-    title: 'Про ClaudeQuota',
+    title: 'About ClaudeQuota',
     message: `ClaudeQuota v${app.getVersion()}`,
     detail:
-      "Показує використання 5-годинного та тижневого лімітів Claude через API Anthropic (/api/oauth/usage), використовуючи облікові дані, збережені локально Claude Code CLI (~/.claude/.credentials.json). Дані не передаються нікуди, окрім api.anthropic.com.",
+      'Shows your Claude 5-hour and weekly limit usage via the Anthropic API (/api/oauth/usage), using credentials saved locally by the Claude Code CLI (~/.claude/.credentials.json). Data is sent nowhere except api.anthropic.com.',
     buttons,
     defaultId: 0,
     cancelId: 0,

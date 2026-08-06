@@ -6,11 +6,11 @@ const { renderFractionIcon, renderStatusIcon } = require('../icon/render');
 const { buildTrayMenu } = require('./menu');
 
 const STATUS_MESSAGES = {
-  'missing-credentials': 'Не знайдено claude CLI. Виконайте `claude login`.',
-  'refresh-token-expired': 'Сесія claude CLI застаріла. Виконайте `claude login` повторно.',
-  'auth-error': 'Помилка авторизації Anthropic API.',
-  'rate-limited': 'Тимчасово обмежено сервером, повторна спроба пізніше.',
-  offline: "Немає з'єднання з api.anthropic.com.",
+  'missing-credentials': "Claude CLI not found. Run `claude login`.",
+  'refresh-token-expired': "Claude CLI session expired. Run `claude login` again.",
+  'auth-error': 'Anthropic API authentication error.',
+  'rate-limited': 'Temporarily rate-limited by the server, will retry later.',
+  offline: 'No connection to api.anthropic.com.',
 };
 
 // Non-happy-path statuses that still get a real status *icon* (question
@@ -67,7 +67,7 @@ function createTrayController({
   let lastStatusKind = null;
 
   const tray = new Tray(buildNativeImage(renderStatusIcon, { kind: 'loading', isDark: currentIsDark }));
-  tray.setToolTip('ClaudeQuota - завантаження...');
+  tray.setToolTip('ClaudeQuota - loading...');
 
   function rebuildMenu() {
     tray.setContextMenu(
@@ -99,11 +99,11 @@ function createTrayController({
     tray.setImage(buildNativeImage(renderFractionIcon, { numerator, denominator, isDark: currentIsDark }));
 
     const fiveHourText = snapshot.fiveHour
-      ? `5г: ${snapshot.fiveHour.utilization}% (оновлення ${formatResetTime(snapshot.fiveHour.resetsAt)})`
-      : '5г: немає даних';
+      ? `5h: ${snapshot.fiveHour.utilization}% (resets ${formatResetTime(snapshot.fiveHour.resetsAt)})`
+      : '5h: no data';
     const sevenDayText = snapshot.sevenDay
-      ? `7д: ${snapshot.sevenDay.utilization}% (оновлення ${formatResetTime(snapshot.sevenDay.resetsAt)})`
-      : '7д: немає даних';
+      ? `7d: ${snapshot.sevenDay.utilization}% (resets ${formatResetTime(snapshot.sevenDay.resetsAt)})`
+      : '7d: no data';
 
     tray.setToolTip(`ClaudeQuota\n${fiveHourText}\n${sevenDayText}`);
   }

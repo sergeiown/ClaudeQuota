@@ -14,17 +14,17 @@ const { Menu } = require('electron');
 function buildTrayMenu({ autoLaunchEnabled, onToggleAutoLaunch, onAbout, onQuit }) {
   return Menu.buildFromTemplate([
     {
-      label: 'Запускати разом із Windows',
+      label: 'Start with Windows',
       type: 'checkbox',
       checked: autoLaunchEnabled,
       click: onToggleAutoLaunch,
     },
     {
-      label: 'Про програму',
+      label: 'About',
       click: onAbout,
     },
     {
-      label: 'Вихід',
+      label: 'Quit',
       click: onQuit,
     },
   ]);
