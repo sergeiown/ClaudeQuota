@@ -11,19 +11,30 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
+// Same traffic-light meaning for both bars: comfortable, getting close,
+// at/near the limit. Thresholds deliberately match nothing in the API
+// itself - just a readable "getting close" / "basically full" split.
+function fillColorFor(percent, palette) {
+  if (percent >= 90) return palette.fillDanger;
+  if (percent >= 70) return palette.fillWarn;
+  return palette.fillGood;
+}
+
 /**
- * Draws one horizontal fill bar: a muted "track" rectangle for the full
- * width, then a solid rectangle over the filled proportion. Both drawn
+ * Draws one horizontal fill bar: a track rectangle tinted to identify
+ * *which* bar this is (own color per bar, constant regardless of level),
+ * then a solid rectangle over the filled proportion colored by *how full*
+ * it is (green/amber/red, shared meaning across both bars). Both drawn
  * with integer pixel-cell math, so edges land on whole pixels with no
  * anti-aliasing blur at any supported icon size.
  */
-function drawBar(ctx, x, y, width, height, percent, palette) {
-  ctx.fillStyle = palette.separator;
+function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
+  ctx.fillStyle = trackColor;
   ctx.fillRect(x, y, width, height);
 
   const filledWidth = Math.round((width * clampPercent(percent)) / 100);
   if (filledWidth > 0) {
-    ctx.fillStyle = palette.foreground;
+    ctx.fillStyle = fillColorFor(clampPercent(percent), palette);
     ctx.fillRect(x, y, filledWidth, height);
   }
 }
@@ -43,6 +54,14 @@ function drawBar(ctx, x, y, width, height, percent, palette) {
  * digits do - people judge a partially-filled bar (battery, wifi signal)
  * accurately at a glance even at tiny sizes. The exact percentages are
  * spelled out in the tray tooltip on hover, same as before.
+ *
+ * Color carries two independent signals (per follow-up feedback that a
+ * single neutral color made the two bars hard to tell apart and gave no
+ * sense of urgency): the *track* (unfilled part) is tinted per bar - blue
+ * for 5-hour, purple for 7-day - constant regardless of level, so the two
+ * rows stay visually distinct even at 0%. The *fill* (filled part) is
+ * colored by how close to the limit it is - green/amber/red - the same
+ * meaning on both bars.
  *
  * @param {object} opts
  * @param {number} opts.numerator 0-100 (5-hour utilization)
@@ -68,8 +87,8 @@ function renderFractionIcon({ numerator, denominator, size, isDark }) {
   const topBarY = 1 * cell;
   const bottomBarY = 9 * cell;
 
-  drawBar(ctx, marginX, topBarY, barWidth, barHeight, numerator, palette);
-  drawBar(ctx, marginX, bottomBarY, barWidth, barHeight, denominator, palette);
+  drawBar(ctx, marginX, topBarY, barWidth, barHeight, numerator, palette.trackFiveHour, palette);
+  drawBar(ctx, marginX, bottomBarY, barWidth, barHeight, denominator, palette.trackSevenDay, palette);
 
   return canvas.toBuffer('image/png');
 }
