@@ -28,21 +28,6 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 Right-clicking the icon shows exactly three items: start with Windows (on by default after install, toggleable), about, and quit.
 
-## Development
-
-```
-npm install
-npm start
-```
-
-## Building an installer
-
-```
-npx electron-builder --win nsis
-```
-
-Produces `dist/ClaudeQuota-Setup-<version>.exe`. The installer and the app share the same icon (`build/icon.ico`, generated from `build/icon-source.png` via `scripts/generate-app-icon.js`).
-
 ## Status
 
 Under active development. macOS is not supported.

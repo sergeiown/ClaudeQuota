@@ -27,3 +27,4 @@ publish:
   provider: github
   owner: sergeiown
   repo: ClaudeQuota
+  releaseType: release
