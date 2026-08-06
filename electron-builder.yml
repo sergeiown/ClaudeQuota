@@ -1,0 +1,24 @@
+appId: net.prostopay.claudequota
+productName: ClaudeQuota
+
+directories:
+  output: dist
+
+files:
+  - src/**/*
+  - package.json
+
+win:
+  target: nsis
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  createDesktopShortcut: false
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+asarUnpack:
+  - node_modules/@napi-rs/canvas/**/*
+  - node_modules/@napi-rs/canvas-win32-x64-msvc/**/*
