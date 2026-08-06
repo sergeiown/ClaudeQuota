@@ -1,4 +1,4 @@
-# ClaudeQuota
+# <img src="build/icon-source.png" width="32" height="32" alt=""> ClaudeQuota
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
 
