@@ -1,7 +1,12 @@
 'use strict';
 
-const { app, dialog, shell } = require('electron');
+const path = require('path');
+const { app, dialog, shell, nativeImage } = require('electron');
 const { REPO_URL } = require('./constants');
+
+// build/icon-source.png must be listed in electron-builder.yml's `files`
+// so it actually ships inside the packaged app, not just the dev checkout.
+const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon-source.png');
 
 /**
  * `dialog.showMessageBox` needs no BrowserWindow parent and no renderer -
@@ -12,6 +17,7 @@ async function showAboutDialog() {
 
   const result = await dialog.showMessageBox({
     type: 'info',
+    icon: nativeImage.createFromPath(ICON_PATH),
     title: 'About ClaudeQuota',
     message: `ClaudeQuota v${app.getVersion()}`,
     detail:
