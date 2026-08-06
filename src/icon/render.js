@@ -4,29 +4,38 @@ const { createCanvas } = require('@napi-rs/canvas');
 const { getPalette } = require('./theme');
 
 /**
- * Renders a diagonal-slash fraction ("10/20", optionally "10%/20%") to a
- * PNG buffer - numerator raised to the upper right, denominator lowered to
- * the lower left of the slash, matching classic typographic fraction
- * layout. No Electron dependency here on purpose, so this (and
- * scripts/preview-icon.js) runs under plain `node`.
+ * Renders a diagonal-slash fraction ("10/20") to a PNG buffer - numerator
+ * raised to the upper right, denominator lowered to the lower left of the
+ * slash, matching classic typographic fraction layout. No Electron
+ * dependency here on purpose, so this (and scripts/preview-icon.js) runs
+ * under plain `node`.
+ *
+ * No "%" signs here - verified via scripts/preview-icon.js that they clip
+ * at both 16px and 32px once combined with two-digit numbers and the
+ * slash. The percentage is spelled out in the tray tooltip instead.
+ *
+ * Numbers are always zero-padded to 2 digits ("05", not "5"). Verified via
+ * scripts/preview-icon.js that un-padded single digits collapse into an
+ * illegible blob with the slash at 16px - there just isn't enough text
+ * width to keep clear of it. Padding keeps every value the same width the
+ * two-digit case was already tuned for. 100 is the one value that doesn't
+ * fit that padding (3 digits) - it gets a smaller font instead of clipping.
  *
  * @param {object} opts
  * @param {number} opts.numerator 0-100
  * @param {number} opts.denominator 0-100
  * @param {number} opts.size 16 or 32 (px, square)
  * @param {boolean} opts.isDark
- * @param {boolean} [opts.showPercent] append "%" to both numbers - only
- *   realistic at 32px, see scripts/preview-icon.js
  * @returns {Buffer} PNG
  */
-function renderFractionIcon({ numerator, denominator, size, isDark, showPercent = false }) {
+function renderFractionIcon({ numerator, denominator, size, isDark }) {
   const palette = getPalette(isDark);
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
 
-  const numText = showPercent ? `${numerator}%` : `${numerator}`;
-  const denText = showPercent ? `${denominator}%` : `${denominator}`;
+  const numText = String(numerator).padStart(2, '0');
+  const denText = String(denominator).padStart(2, '0');
 
   const numberFontSize = Math.round(size * 0.42);
   const slashFontSize = Math.round(size * 0.8);
@@ -40,13 +49,16 @@ function renderFractionIcon({ numerator, denominator, size, isDark, showPercent 
   ctx.fillStyle = palette.separator;
   ctx.fillText('/', size * 0.5, size * 0.52);
 
-  ctx.font = `bold ${numberFontSize}px Segoe UI`;
   ctx.fillStyle = palette.foreground;
 
+  // 100 is 3 digits where every other value is exactly 2 - shrink just
+  // that piece rather than let it overflow past the icon edge.
+  ctx.font = `bold ${numText.length > 2 ? Math.round(numberFontSize * 0.72) : numberFontSize}px Segoe UI`;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(numText, size * 0.66, size * 0.44);
 
+  ctx.font = `bold ${denText.length > 2 ? Math.round(numberFontSize * 0.72) : numberFontSize}px Segoe UI`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(denText, size * 0.34, size * 0.86);
