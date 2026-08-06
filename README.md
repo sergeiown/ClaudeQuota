@@ -9,6 +9,8 @@ A Windows tray app that shows your Claude usage limits at a glance: two fill bar
 
 Each bar's empty ("track") color is fixed and just identifies which bar is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green below 70%, amber from 70% up to 90%, red at 90% and above. Both bars use the same thresholds.
 
+All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
+
 ## How it works
 
 The app reads the OAuth token that the Claude Code CLI already saved locally (`~/.claude/.credentials.json`) and polls the undocumented `GET https://api.anthropic.com/api/oauth/usage` endpoint, which returns the current `five_hour` and `seven_day` limit utilization. No data goes anywhere except `api.anthropic.com`.
