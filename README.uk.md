@@ -1,0 +1,48 @@
+# ClaudeQuota
+
+[![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
+
+[![English](https://img.shields.io/badge/-English-lightgrey)](README.md)
+[![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-blue)](README.uk.md)
+
+Трей-застосунок для Windows, який показує використання лімітів Claude одним поглядом: дві шкали заповнення на іконці в треї - одна для 5-годинного вікна, друга для тижневого. Колір заповнення змінюється зелений → жовтий → червоний у міру наближення до ліміту; точний відсоток і час оновлення - у тултипі при наведенні.
+
+## Як це працює
+
+Застосунок читає OAuth токен, який уже зберігає локально Claude Code CLI (`~/.claude/.credentials.json`), і опитує недокументований ендпоінт `GET https://api.anthropic.com/api/oauth/usage`, який повертає поточне використання 5-годинного (`five_hour`) і тижневого (`seven_day`) лімітів. Дані не передаються нікуди, окрім `api.anthropic.com`.
+
+Оскільки ендпоінт недокументований, а access token живе приблизно годину, застосунок:
+
+- опитує API не частіше ніж раз на 180 секунд (це межа, яку застосовує сам токен, а не довільний вибір);
+- проактивно оновлює access token через refresh token до завершення його дії;
+- ніколи не пише у файл credentials, яким керує сам Claude Code CLI - оновлений токен зберігається в окремому приватному кеші, і при наступній перевірці переможе новіший з двох (файл CLI чи приватний кеш).
+
+![Потік даних ClaudeQuota](docs/structure_ua.svg)
+
+## Вимоги
+
+- Windows 10/11.
+- Встановлений і авторизований Claude Code CLI (`claude login`).
+
+## Меню трею
+
+Правий клік на іконці показує рівно три пункти: запуск разом із Windows (увімкнено за замовчуванням після встановлення, можна перемкнути), про програму, вихід.
+
+## Розробка
+
+```
+npm install
+npm start
+```
+
+## Збірка інсталятора
+
+```
+npx electron-builder --win nsis
+```
+
+Створює `dist/ClaudeQuota-Setup-<version>.exe`. Інсталятор і застосунок мають одну іконку (`build/icon.ico`, згенеровану з `build/icon-source.png` через `scripts/generate-app-icon.js`).
+
+## Статус
+
+Проєкт у активній розробці. macOS не підтримується.

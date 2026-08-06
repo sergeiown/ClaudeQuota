@@ -2,30 +2,47 @@
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
 
-Трей-застосунок для Windows, який показує використання лімітів Claude Code у системному треї: дві горизонтальні шкали заповнення - одна для 5-годинного ліміту, друга для тижневого. Колір заповнення відображає, наскільки близько до ліміту (зелений - жовтий - червоний), точний відсоток - у тултипі при наведенні.
+[![English](https://img.shields.io/badge/-English-blue)](README.md)
+[![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
 
-## Як це працює
+A Windows tray app that shows your Claude usage limits at a glance: two fill bars in the tray icon, one for the 5-hour window and one for the 7-day window. Bar color shifts green → amber → red as you get closer to the limit; hovering the icon shows the exact percentages and reset times.
 
-Застосунок читає OAuth токен, збережений локально Claude Code CLI (`~/.claude/.credentials.json`), і опитує недокументований ендпоінт `GET https://api.anthropic.com/api/oauth/usage`, який повертає поточний відсоток використання 5-годинного (`five_hour`) і тижневого (`seven_day`) лімітів. Дані не передаються нікуди, окрім `api.anthropic.com`.
+## How it works
 
-Оскільки ендпоінт недокументований, а токен живе приблизно годину, застосунок:
+The app reads the OAuth token that the Claude Code CLI already saved locally (`~/.claude/.credentials.json`) and polls the undocumented `GET https://api.anthropic.com/api/oauth/usage` endpoint, which returns the current `five_hour` and `seven_day` limit utilization. No data goes anywhere except `api.anthropic.com`.
 
-- опитує API не частіше ніж раз на 180 секунд (обмеження на рівні токена);
-- проактивно оновлює access token через refresh token до його завершення;
-- ніколи не перезаписує файл credentials, яким керує сам Claude Code CLI - власний оновлений токен зберігається в окремому приватному кеші.
+Since the endpoint is undocumented and the access token lives for about an hour, the app:
 
-## Вимоги
+- polls the usage endpoint no more than once every 180 seconds (a limit enforced by the token itself, not an arbitrary choice);
+- proactively refreshes the access token via the refresh token before it expires;
+- never writes to the CLI's own credentials file - a refreshed token is kept in a separate private cache instead, and whichever of the two (CLI file or private cache) has the newer token wins on the next check.
+
+![ClaudeQuota data flow](docs/structure.svg)
+
+## Requirements
 
 - Windows 10/11.
-- Встановлений і авторизований Claude Code CLI (`claude login`).
+- Claude Code CLI installed and logged in (`claude login`).
 
-## Розробка
+## Tray menu
+
+Right-clicking the icon shows exactly three items: start with Windows (on by default after install, toggleable), about, and quit.
+
+## Development
 
 ```
 npm install
 npm start
 ```
 
-## Статус
+## Building an installer
 
-Проєкт у розробці. macOS не підтримується.
+```
+npx electron-builder --win nsis
+```
+
+Produces `dist/ClaudeQuota-Setup-<version>.exe`. The installer and the app share the same icon (`build/icon.ico`, generated from `build/icon-source.png` via `scripts/generate-app-icon.js`).
+
+## Status
+
+Under active development. macOS is not supported.

@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 440" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="arrowhead" />
+    </marker>
+  </defs>
+  <style>
+    text { font-size: 15px; }
+    .title { font-size: 20px; font-weight: 600; fill: #1a1a1a; }
+    .box rect { fill: #f5f5f7; stroke: #4a4a4a; stroke-width: 1.5; }
+    .box text { fill: #1a1a1a; }
+    .box.accent rect { fill: #e6ecf9; stroke: #3355aa; }
+    .box.accent text { fill: #1a1a1a; }
+    .arrow { stroke: #666666; stroke-width: 1.75; fill: none; }
+    .arrowhead { fill: #666666; }
+    .edge-label { fill: #555555; font-size: 12.5px; }
+    .note { fill: #777777; font-size: 12px; font-style: italic; }
+
+    @media (prefers-color-scheme: dark) {
+      .title { fill: #f0f0f0; }
+      .box rect { fill: #2a2a2e; stroke: #9a9a9a; }
+      .box text { fill: #f0f0f0; }
+      .box.accent rect { fill: #24344a; stroke: #7aa2e8; }
+      .box.accent text { fill: #f0f0f0; }
+      .arrow { stroke: #aaaaaa; }
+      .arrowhead { fill: #aaaaaa; }
+      .edge-label { fill: #bbbbbb; }
+      .note { fill: #999999; }
+    }
+  </style>
+
+  <text x="20" y="26" class="title">ClaudeQuota data flow</text>
+
+  <!-- Row 1: main happy path -->
+  <g class="box">
+    <rect x="20" y="55" width="190" height="72" rx="6" />
+    <text x="115" y="86" text-anchor="middle">Claude Code CLI</text>
+    <text x="115" y="106" text-anchor="middle">credentials file</text>
+  </g>
+  <text x="115" y="140" text-anchor="middle" class="note">~/.claude/.credentials.json</text>
+  <text x="115" y="153" text-anchor="middle" class="note">never written to by ClaudeQuota</text>
+
+  <g class="box">
+    <rect x="270" y="55" width="200" height="72" rx="6" />
+    <text x="370" y="86" text-anchor="middle">ClaudeQuota</text>
+    <text x="370" y="106" text-anchor="middle">check token expiry</text>
+  </g>
+
+  <g class="box accent">
+    <rect x="530" y="55" width="220" height="72" rx="6" />
+    <text x="640" y="86" text-anchor="middle">GET /api/oauth/usage</text>
+    <text x="640" y="106" text-anchor="middle">Anthropic API</text>
+  </g>
+  <g class="box">
+    <rect x="810" y="55" width="230" height="72" rx="6" />
+    <text x="925" y="86" text-anchor="middle">Usage snapshot</text>
+    <text x="925" y="106" text-anchor="middle">five_hour %, seven_day %</text>
+  </g>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M210,91 L270,91" />
+  <text x="240" y="83" text-anchor="middle" class="edge-label">reads</text>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M470,91 L530,91" />
+  <text x="500" y="78" text-anchor="middle" class="edge-label">valid</text>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M750,91 L810,91" />
+  <text x="780" y="78" text-anchor="middle" class="edge-label">response</text>
+
+  <!-- Row 2: refresh branch -->
+  <g class="box accent">
+    <rect x="270" y="195" width="200" height="68" rx="6" />
+    <text x="370" y="223" text-anchor="middle">OAuth token refresh</text>
+    <text x="370" y="243" text-anchor="middle">Anthropic</text>
+  </g>
+
+  <g class="box">
+    <rect x="530" y="195" width="220" height="68" rx="6" />
+    <text x="640" y="223" text-anchor="middle">Private token cache</text>
+    <text x="640" y="243" text-anchor="middle">app userData folder</text>
+  </g>
+  <text x="640" y="278" text-anchor="middle" class="note">CLI's own credentials file is never touched</text>
+  <text x="640" y="138" text-anchor="middle" class="note">undocumented - max 1 call / 180s</text>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M370,127 L370,195" />
+  <text x="378" y="165" class="edge-label">expiring soon (&lt;5 min)</text>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M470,229 L530,229" />
+  <text x="500" y="221" text-anchor="middle" class="edge-label">new token</text>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M640,195 C 640,150 500,150 470,105" />
+  <text x="700" y="175" text-anchor="middle" class="edge-label">newer expiresAt wins</text>
+
+  <!-- Row 3: outputs -->
+  <g class="box">
+    <rect x="790" y="330" width="200" height="72" rx="6" />
+    <text x="890" y="361" text-anchor="middle">Tray icon</text>
+    <text x="890" y="381" text-anchor="middle">two fill bars</text>
+  </g>
+
+  <g class="box">
+    <rect x="1000" y="330" width="160" height="72" rx="6" />
+    <text x="1080" y="361" text-anchor="middle">Tooltip</text>
+    <text x="1080" y="381" text-anchor="middle">exact %, reset time</text>
+  </g>
+
+  <path class="arrow" marker-end="url(#arrow)" d="M900,127 L890,330" />
+  <path class="arrow" marker-end="url(#arrow)" d="M950,127 L1080,330" />
+</svg>
