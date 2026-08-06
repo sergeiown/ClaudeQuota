@@ -74,8 +74,8 @@ function initAutoUpdater() {
       type: 'question',
       title: 'Update ready',
       message: `ClaudeQuota ${info.version} has been downloaded`,
-      detail: 'Restart now to install it?',
-      buttons: ['Restart now', 'Later'],
+      detail: 'Restart ClaudeQuota now to finish installing it? This only restarts the app, not Windows.',
+      buttons: ['Restart ClaudeQuota', 'Later'],
       defaultId: 0,
       cancelId: 1,
     });
