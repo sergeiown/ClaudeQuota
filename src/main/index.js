@@ -1,0 +1,57 @@
+'use strict';
+
+const { app, nativeTheme } = require('electron');
+
+const { createUsagePoller } = require('../usage/poller');
+const { createTrayController } = require('./tray');
+const { isAutoLaunchEnabled, setAutoLaunchEnabled } = require('./autostart');
+const { showAboutDialog } = require('./about');
+
+// Tray-only app: no BrowserWindow is ever created, so Electron's default
+// "quit when all windows are closed" never triggers (there's no window to
+// close in the first place). The only place app.quit() is called is the
+// "Вихід" menu item, wired up below.
+
+let poller = null;
+
+const gotLock = app.requestSingleInstanceLock();
+
+if (!gotLock) {
+  // Another instance (e.g. one started via autostart, another via a
+  // manual double-click) already owns the tray icon - don't create a
+  // second one.
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (poller) poller.requestImmediateCheck();
+  });
+
+  app.whenReady().then(bootstrap);
+}
+
+function bootstrap() {
+  const tray = createTrayController({
+    isDark: nativeTheme.shouldUseDarkColors,
+    getAutoLaunchEnabled: isAutoLaunchEnabled,
+    onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
+    onAbout: showAboutDialog,
+    onQuit: () => app.quit(),
+    onRequestRefresh: () => poller && poller.requestImmediateCheck(),
+  });
+
+  poller = createUsagePoller({
+    onSnapshot: (snapshot) => tray.showSnapshot(snapshot),
+    onStatus: (status) => tray.showStatus(status),
+  });
+
+  nativeTheme.on('updated', () => {
+    tray.refreshTheme(nativeTheme.shouldUseDarkColors);
+  });
+
+  poller.start();
+
+  app.on('before-quit', () => {
+    poller.stop();
+    tray.destroy();
+  });
+}
