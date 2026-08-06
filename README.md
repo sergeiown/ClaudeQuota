@@ -5,7 +5,9 @@
 [![English](https://img.shields.io/badge/-English-blue)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
 
-A Windows tray app that shows your Claude usage limits at a glance: two fill bars in the tray icon, one for the 5-hour window and one for the 7-day window. Bar color shifts green → amber → red as you get closer to the limit; hovering the icon shows the exact percentages and reset times.
+A Windows tray app that shows your Claude usage limits at a glance: two fill bars in the tray icon, one for the 5-hour window and one for the 7-day window. Hovering the icon shows the exact percentages and reset times.
+
+Each bar's empty ("track") color is fixed and just identifies which bar is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green below 70%, amber from 70% up to 90%, red at 90% and above. Both bars use the same thresholds.
 
 ## How it works
 
