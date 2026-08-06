@@ -28,7 +28,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 ## Tray menu
 
-Right-clicking the icon shows exactly three items: start with Windows (on by default after install, toggleable), about, and quit.
+Right-clicking the icon shows: start with Windows (on by default after install, toggleable), open log, about, and quit.
 
 ## Status
 

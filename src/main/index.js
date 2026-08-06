@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, nativeTheme } = require('electron');
+const { app, nativeTheme, shell } = require('electron');
 
 const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
@@ -43,6 +43,7 @@ function bootstrap() {
     isDark: nativeTheme.shouldUseDarkColors,
     getAutoLaunchEnabled: isAutoLaunchEnabled,
     onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
+    onOpenLog: () => shell.openPath(log.transports.file.getFile().path),
     onAbout: showAboutDialog,
     onQuit: quitOrInstall,
     onRequestRefresh: () => poller && poller.requestImmediateCheck(),

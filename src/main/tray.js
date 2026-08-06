@@ -47,6 +47,7 @@ function formatResetTime(isoString) {
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
+ * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout
  * @param {() => void} opts.onQuit
  * @param {() => void} [opts.onRequestRefresh] called when the user opens
@@ -57,6 +58,7 @@ function formatResetTime(isoString) {
 function createTrayController({
   getAutoLaunchEnabled,
   onToggleAutoLaunch,
+  onOpenLog,
   onAbout,
   onQuit,
   onRequestRefresh,
@@ -77,6 +79,7 @@ function createTrayController({
           onToggleAutoLaunch();
           rebuildMenu();
         },
+        onOpenLog,
         onAbout,
         onQuit,
       })
