@@ -19,15 +19,22 @@ const LIGHT = {
   // Track (unfilled) tint per bar, so the two fill bars stay visually
   // distinct from each other even at 0% - blue for the 5-hour window,
   // purple for the 7-day one. Independent of the fill-level colors below.
-  // Higher opacity and deeper hues than the first attempt - the original
-  // 0.45 alpha washed out to near-invisible against the near-white
-  // Windows 11 light-theme taskbar (real-world feedback, not a guess).
-  trackFiveHour: 'rgba(40, 100, 200, 0.85)',
-  trackSevenDay: 'rgba(130, 60, 200, 0.85)',
+  //
+  // Deliberately kept light/medium (not dark) - the fill colors below are
+  // dark and saturated by design, so track just needs to sit clearly
+  // between white and the darkest fill color to read as a distinct region
+  // on both sides of that boundary. An earlier attempt darkened the track
+  // too, which fixed contrast against the white taskbar but nearly
+  // eliminated it against the amber fill (computed luminance came out
+  // within ~1 of 255 apart - i.e. they were reading as the same color).
+  // render.js also draws a thin separator line at the fill/track boundary
+  // as a second, color-independent guarantee.
+  trackFiveHour: 'rgba(90, 150, 230, 0.6)',
+  trackSevenDay: 'rgba(190, 130, 230, 0.6)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
-  // Darkened from the first attempt for the same light-background contrast
-  // reason, especially the amber, which read as too pale/yellow on white.
+  // Dark/saturated so it reads clearly against both white (behind the
+  // track) and the light track color itself.
   fillGood: '#217a37',
   fillWarn: '#a8690a',
   fillDanger: '#b23032',

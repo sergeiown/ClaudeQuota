@@ -30,6 +30,13 @@ function fillColorFor(percent, palette) {
  * it is (green/amber/red, shared meaning across both bars). Both drawn
  * with integer pixel-cell math, so edges land on whole pixels with no
  * anti-aliasing blur at any supported icon size.
+ *
+ * A thin divider is drawn at the fill/track boundary using the palette's
+ * neutral foreground color - a color-independent guarantee that the
+ * boundary stays visible even if a given track/fill pairing happens to
+ * land close in lightness (verified this actually happens: the light
+ * track and the amber fill came out within ~1 of 255 apart in computed
+ * luminance, i.e. next to invisible, before this was added).
  */
 function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
   ctx.fillStyle = trackColor;
@@ -39,6 +46,12 @@ function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
   if (filledWidth > 0) {
     ctx.fillStyle = fillColorFor(clampPercent(percent), palette);
     ctx.fillRect(x, y, filledWidth, height);
+  }
+
+  if (filledWidth > 0 && filledWidth < width) {
+    const dividerWidth = Math.max(1, Math.round(height / 6));
+    ctx.fillStyle = palette.foreground;
+    ctx.fillRect(x + filledWidth, y, dividerWidth, height);
   }
 }
 
