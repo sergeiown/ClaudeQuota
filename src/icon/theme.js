@@ -16,6 +16,10 @@ const LIGHT = {
   foreground: '#1a1a1a',
   separator: 'rgba(26, 26, 26, 0.6)',
   errorForeground: '#b3261e',
+  // Fill/track boundary divider in the tray icon bars - softer dark gray
+  // rather than near-black `foreground`, which read as too harsh/heavy a
+  // line for what's meant to be a subtle boundary marker.
+  divider: '#555555',
   // Track (unfilled) tint per bar, so the two fill bars stay visually
   // distinct from each other even at 0% - blue for the 5-hour window,
   // purple for the 7-day one. Independent of the fill-level colors below.
@@ -30,8 +34,11 @@ const LIGHT = {
   // color); a pale, low-saturation track sidesteps that regardless of how
   // bright the fill is. render.js also draws a thin separator line at the
   // fill/track boundary as a second, color-independent guarantee.
-  trackFiveHour: 'rgba(110, 150, 200, 0.4)',
-  trackSevenDay: 'rgba(180, 150, 210, 0.4)',
+  // Lighter/more transparent than the previous attempt - once the fill
+  // colors became vivid, the track only needs to be present as a subtle
+  // backdrop, not compete for attention.
+  trackFiveHour: 'rgba(120, 160, 210, 0.3)',
+  trackSevenDay: 'rgba(195, 165, 220, 0.3)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
   // Vivid and bright by design (bright green / gold-amber / flame red) -
@@ -47,8 +54,11 @@ const DARK = {
   foreground: '#f0f0f0',
   separator: 'rgba(240, 240, 240, 0.6)',
   errorForeground: '#ff8a80',
-  trackFiveHour: 'rgba(90, 158, 255, 0.5)',
-  trackSevenDay: 'rgba(186, 140, 255, 0.5)',
+  // Unchanged from `foreground` - no complaint about this one being too
+  // harsh (it's already an off-white, not stark white).
+  divider: '#f0f0f0',
+  trackFiveHour: 'rgba(100, 165, 255, 0.35)',
+  trackSevenDay: 'rgba(200, 155, 255, 0.35)',
   fillGood: '#4ade80',
   fillWarn: '#fbbf24',
   fillDanger: '#ff5a4e',

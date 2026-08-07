@@ -14,8 +14,8 @@
 
 | | Світла тема | Темна тема |
 |---|---|---|
-| Трек 5-годинного вікна | ![](https://img.shields.io/badge/-%20-6E96C8) `#6E96C8` (40% прозорості) | ![](https://img.shields.io/badge/-%20-5A9EFF) `#5A9EFF` (50% прозорості) |
-| Трек тижневого вікна | ![](https://img.shields.io/badge/-%20-B496D2) `#B496D2` (40% прозорості) | ![](https://img.shields.io/badge/-%20-BA8CFF) `#BA8CFF` (50% прозорості) |
+| Трек 5-годинного вікна | ![](https://img.shields.io/badge/-%20-78A0D2) `#78A0D2` (30% прозорості) | ![](https://img.shields.io/badge/-%20-64A5FF) `#64A5FF` (35% прозорості) |
+| Трек тижневого вікна | ![](https://img.shields.io/badge/-%20-C3A5DC) `#C3A5DC` (30% прозорості) | ![](https://img.shields.io/badge/-%20-C89BFF) `#C89BFF` (35% прозорості) |
 | Заповнення, до 70% | ![](https://img.shields.io/badge/-%20-22C55E) `#22C55E` | ![](https://img.shields.io/badge/-%20-4ADE80) `#4ADE80` |
 | Заповнення, 70-89% | ![](https://img.shields.io/badge/-%20-F59E0B) `#F59E0B` | ![](https://img.shields.io/badge/-%20-FBBF24) `#FBBF24` |
 | Заповнення, від 90% | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` | ![](https://img.shields.io/badge/-%20-FF5A4E) `#FF5A4E` |

@@ -50,7 +50,7 @@ function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
 
   if (filledWidth > 0 && filledWidth < width) {
     const dividerWidth = Math.max(1, Math.round(height / 6));
-    ctx.fillStyle = palette.foreground;
+    ctx.fillStyle = palette.divider;
     ctx.fillRect(x + filledWidth, y, dividerWidth, height);
   }
 }
