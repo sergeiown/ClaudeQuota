@@ -1,7 +1,7 @@
 {
   "name": "claudequota",
   "productName": "ClaudeQuota",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Tray-monitor use of Claude 5-hour and weekly limits on Windows",
   "private": true,
   "main": "src/main/index.js",
