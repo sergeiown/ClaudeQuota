@@ -1,6 +1,7 @@
 # <img src="build/icon-source.png" width="32" height="32" alt=""> ClaudeQuota
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/sergeiown/ClaudeQuota/blob/master/LICENSE)
 
 [![English](https://img.shields.io/badge/-English-blue)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
@@ -10,6 +11,14 @@ A Windows tray app that shows your Claude usage limits at a glance: two fill bar
 Each bar's empty ("track") color is fixed and just identifies which bar is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green below 70%, amber from 70% up to 90%, red at 90% and above. Both bars use the same thresholds.
 
 All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
+
+| | Light theme | Dark theme |
+|---|---|---|
+| 5-hour track | ![](https://img.shields.io/badge/-%20-2864C8) `#2864C8` (85% opacity) | ![](https://img.shields.io/badge/-%20-5A9EFF) `#5A9EFF` (50% opacity) |
+| 7-day track | ![](https://img.shields.io/badge/-%20-823CC8) `#823CC8` (85% opacity) | ![](https://img.shields.io/badge/-%20-BA8CFF) `#BA8CFF` (50% opacity) |
+| Fill, under 70% | ![](https://img.shields.io/badge/-%20-217A37) `#217A37` | ![](https://img.shields.io/badge/-%20-4CC366) `#4CC366` |
+| Fill, 70-89% | ![](https://img.shields.io/badge/-%20-A8690A) `#A8690A` | ![](https://img.shields.io/badge/-%20-F0B429) `#F0B429` |
+| Fill, 90%+ | ![](https://img.shields.io/badge/-%20-B23032) `#B23032` | ![](https://img.shields.io/badge/-%20-FF5C5C) `#FF5C5C` |
 
 ## How it works
 
@@ -34,4 +43,8 @@ Right-clicking the icon shows: start with Windows (on by default after install, 
 
 ## Status
 
-Under active development. macOS is not supported.
+Under active development.
+
+## License
+
+[MIT](LICENSE).

@@ -1,6 +1,7 @@
 # <img src="build/icon-source.png" width="32" height="32" alt=""> ClaudeQuota
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/sergeiown/ClaudeQuota/blob/master/LICENSE)
 
 [![English](https://img.shields.io/badge/-English-lightgrey)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-blue)](README.uk.md)
@@ -10,6 +11,14 @@
 Колір "порожньої" частини кожної шкали фіксований і лише позначає, яка це шкала - синій для 5-годинного вікна, фіолетовий для тижневого - він не змінюється залежно від використання. Колір заповненої частини залежить від того, наскільки близько це вікно до свого ліміту: зелений до 70%, жовтий від 70% до 90%, червоний від 90% і вище. Пороги однакові для обох шкал.
 
 Усі ці кольори, як і сама іконка, підлаштовуються під світлу чи темну тему Windows і перемальовуються миттєво при зміні теми - без перезапуску застосунку.
+
+| | Світла тема | Темна тема |
+|---|---|---|
+| Трек 5-годинного вікна | ![](https://img.shields.io/badge/-%20-2864C8) `#2864C8` (85% прозорості) | ![](https://img.shields.io/badge/-%20-5A9EFF) `#5A9EFF` (50% прозорості) |
+| Трек тижневого вікна | ![](https://img.shields.io/badge/-%20-823CC8) `#823CC8` (85% прозорості) | ![](https://img.shields.io/badge/-%20-BA8CFF) `#BA8CFF` (50% прозорості) |
+| Заповнення, до 70% | ![](https://img.shields.io/badge/-%20-217A37) `#217A37` | ![](https://img.shields.io/badge/-%20-4CC366) `#4CC366` |
+| Заповнення, 70-89% | ![](https://img.shields.io/badge/-%20-A8690A) `#A8690A` | ![](https://img.shields.io/badge/-%20-F0B429) `#F0B429` |
+| Заповнення, від 90% | ![](https://img.shields.io/badge/-%20-B23032) `#B23032` | ![](https://img.shields.io/badge/-%20-FF5C5C) `#FF5C5C` |
 
 ## Як це працює
 
@@ -34,4 +43,8 @@
 
 ## Статус
 
-Проєкт у активній розробці. macOS не підтримується.
+Проєкт у активній розробці.
+
+## Ліцензія
+
+[MIT](LICENSE).
