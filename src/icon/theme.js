@@ -16,13 +16,18 @@ const LIGHT = {
   // Track (unfilled) tint per bar, so the two fill bars stay visually
   // distinct from each other even at 0% - blue for the 5-hour window,
   // purple for the 7-day one. Independent of the fill-level colors below.
-  trackFiveHour: 'rgba(64, 128, 224, 0.45)',
-  trackSevenDay: 'rgba(158, 92, 224, 0.45)',
+  // Higher opacity and deeper hues than the first attempt - the original
+  // 0.45 alpha washed out to near-invisible against the near-white
+  // Windows 11 light-theme taskbar (real-world feedback, not a guess).
+  trackFiveHour: 'rgba(40, 100, 200, 0.85)',
+  trackSevenDay: 'rgba(130, 60, 200, 0.85)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
-  fillGood: '#2e9e44',
-  fillWarn: '#d99a1f',
-  fillDanger: '#d13a3a',
+  // Darkened from the first attempt for the same light-background contrast
+  // reason, especially the amber, which read as too pale/yellow on white.
+  fillGood: '#217a37',
+  fillWarn: '#a8690a',
+  fillDanger: '#b23032',
 };
 
 const DARK = {
