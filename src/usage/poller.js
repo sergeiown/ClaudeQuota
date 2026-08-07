@@ -143,7 +143,16 @@ function createUsagePoller({ onSnapshot, onStatus }) {
       consecutiveNetworkFailures = 0;
       onSnapshot(snapshot);
     } catch (err) {
-      if (!(err instanceof UsageHttpError)) throw err;
+      if (!(err instanceof UsageHttpError)) {
+        // Network-level failure (TypeError: fetch failed, etc.) - treat as
+        // transient offline rather than re-throwing, which would cause an
+        // unhandled rejection and stop the scheduler permanently.
+        consecutiveUsageFailures += 1;
+        if (consecutiveUsageFailures >= STALE_AFTER_FAILURES) {
+          onStatus(STATUS.OFFLINE, { message: err.message, lastSuccessfulUsageFetchAt });
+        }
+        return;
+      }
 
       if (err.status === 401 && !isRetryAfterForcedRefresh) {
         try {
