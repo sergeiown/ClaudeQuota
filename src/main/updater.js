@@ -1,3 +1,6 @@
+/* Copyright (c) 2026 Serhii Myshko
+ * Licensed under the MIT License. See LICENSE file in the project root. */
+
 'use strict';
 
 const { app, dialog } = require('electron');
