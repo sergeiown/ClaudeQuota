@@ -34,13 +34,53 @@ function buildNativeImage(renderFn, args) {
   return image;
 }
 
-function formatResetTime(isoString) {
-  if (!isoString) return '?';
-  try {
-    return new Date(isoString).toLocaleString();
-  } catch {
-    return '?';
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+function hhmm(date) {
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+function formatHeader(fetchedAt) {
+  const d = new Date(fetchedAt || Date.now());
+  return `ClaudeQuota as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Returns e.g. "resets in 2 hours 15 minutes (14:30)" or "expires in 4 minutes (14:30)". */
+function formatCountdown(resetsAtIso) {
+  if (!resetsAtIso) return 'no reset time';
+  const resetsAt = new Date(resetsAtIso);
+  const diffMs = resetsAt - Date.now();
+  if (diffMs <= 0) return 'resetting now';
+
+  const ONE_MIN = 60_000;
+  const ONE_HOUR = 3_600_000;
+  const ONE_DAY = 86_400_000;
+
+  const underOneHour = diffMs < ONE_HOUR;
+  const underOneDay = diffMs < ONE_DAY;
+
+  const timeTag = underOneDay ? ` (${hhmm(resetsAt)})` : '';
+
+  if (underOneHour) {
+    const mins = Math.max(1, Math.floor(diffMs / ONE_MIN));
+    return `expires in ${mins} minute${mins !== 1 ? 's' : ''}${timeTag}`;
   }
+
+  const totalHours = Math.floor(diffMs / ONE_HOUR);
+  const remainingMins = Math.floor((diffMs % ONE_HOUR) / ONE_MIN);
+  const minPart = remainingMins > 0 ? ` ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}` : '';
+
+  if (underOneDay) {
+    return `resets in ${totalHours} hour${totalHours !== 1 ? 's' : ''}${minPart}${timeTag}`;
+  }
+
+  const totalDays = Math.floor(diffMs / ONE_DAY);
+  const remainingHours = totalHours - totalDays * 24;
+  const hourPart = remainingHours > 0 ? ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}` : '';
+  return `resets in ${totalDays} day${totalDays !== 1 ? 's' : ''}${hourPart}`;
 }
 
 /**
@@ -104,14 +144,16 @@ function createTrayController({
 
     tray.setImage(buildNativeImage(renderFractionIcon, { numerator, denominator, isDark: currentIsDark }));
 
+    const header = formatHeader(snapshot.fetchedAt);
+
     const fiveHourText = snapshot.fiveHour
-      ? `5h: ${snapshot.fiveHour.utilization}% (resets ${formatResetTime(snapshot.fiveHour.resetsAt)})`
+      ? `5h: ${snapshot.fiveHour.utilization}% - ${formatCountdown(snapshot.fiveHour.resetsAt)}`
       : '5h: no data';
     const sevenDayText = snapshot.sevenDay
-      ? `7d: ${snapshot.sevenDay.utilization}% (resets ${formatResetTime(snapshot.sevenDay.resetsAt)})`
+      ? `7d: ${snapshot.sevenDay.utilization}% - ${formatCountdown(snapshot.sevenDay.resetsAt)}`
       : '7d: no data';
 
-    tray.setToolTip(`ClaudeQuota\n${fiveHourText}\n${sevenDayText}`);
+    tray.setToolTip(`${header}\n${fiveHourText}\n${sevenDayText}`);
   }
 
   function showStatus(kind) {
