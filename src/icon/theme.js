@@ -20,24 +20,27 @@ const LIGHT = {
   // distinct from each other even at 0% - blue for the 5-hour window,
   // purple for the 7-day one. Independent of the fill-level colors below.
   //
-  // Deliberately kept light/medium (not dark) - the fill colors below are
-  // dark and saturated by design, so track just needs to sit clearly
-  // between white and the darkest fill color to read as a distinct region
-  // on both sides of that boundary. An earlier attempt darkened the track
-  // too, which fixed contrast against the white taskbar but nearly
-  // eliminated it against the amber fill (computed luminance came out
-  // within ~1 of 255 apart - i.e. they were reading as the same color).
-  // render.js also draws a thin separator line at the fill/track boundary
-  // as a second, color-independent guarantee.
-  trackFiveHour: 'rgba(90, 150, 230, 0.6)',
-  trackSevenDay: 'rgba(190, 130, 230, 0.6)',
+  // Deliberately pale/desaturated (not vivid) - the fill colors below are
+  // vivid and saturated by design (per feedback that the first two attempts
+  // read as too dull/muddy), so track just needs to stay light enough to
+  // sit clearly between white and any fill color's luminance, whatever hue
+  // the fill happens to be. A vivid track color competing with a vivid fill
+  // color was the earlier failure mode (computed luminance came out within
+  // ~1 of 255 apart for track vs. amber - i.e. they read as the same
+  // color); a pale, low-saturation track sidesteps that regardless of how
+  // bright the fill is. render.js also draws a thin separator line at the
+  // fill/track boundary as a second, color-independent guarantee.
+  trackFiveHour: 'rgba(110, 150, 200, 0.4)',
+  trackSevenDay: 'rgba(180, 150, 210, 0.4)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
-  // Dark/saturated so it reads clearly against both white (behind the
-  // track) and the light track color itself.
-  fillGood: '#217a37',
-  fillWarn: '#a8690a',
-  fillDanger: '#b23032',
+  // Vivid and bright by design (bright green / gold-amber / flame red) -
+  // muted "safe" tones read as dull and the amber in particular was nearly
+  // invisible. Kept dark/saturated enough to still clear the pale track's
+  // luminance above.
+  fillGood: '#22c55e',
+  fillWarn: '#f59e0b',
+  fillDanger: '#ff3b30',
 };
 
 const DARK = {
@@ -46,9 +49,9 @@ const DARK = {
   errorForeground: '#ff8a80',
   trackFiveHour: 'rgba(90, 158, 255, 0.5)',
   trackSevenDay: 'rgba(186, 140, 255, 0.5)',
-  fillGood: '#4cc366',
-  fillWarn: '#f0b429',
-  fillDanger: '#ff5c5c',
+  fillGood: '#4ade80',
+  fillWarn: '#fbbf24',
+  fillDanger: '#ff5a4e',
 };
 
 /**
