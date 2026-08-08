@@ -11,17 +11,31 @@ const { Menu } = require('electron');
  * @param {object} opts
  * @param {boolean} opts.autoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
+ * @param {'bars'|'circles'} opts.displayStyle
+ * @param {() => void} opts.onToggleDisplayStyle
  * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout
  * @param {() => void} opts.onQuit
  */
-function buildTrayMenu({ autoLaunchEnabled, onToggleAutoLaunch, onOpenLog, onAbout, onQuit }) {
+function buildTrayMenu({
+  autoLaunchEnabled,
+  onToggleAutoLaunch,
+  displayStyle,
+  onToggleDisplayStyle,
+  onOpenLog,
+  onAbout,
+  onQuit,
+}) {
   return Menu.buildFromTemplate([
     {
       label: 'Start with Windows',
       type: 'checkbox',
       checked: autoLaunchEnabled,
       click: onToggleAutoLaunch,
+    },
+    {
+      label: `Display style: ${displayStyle === 'circles' ? 'Circles' : 'Bars'}`,
+      click: onToggleDisplayStyle,
     },
     {
       label: 'Open log',

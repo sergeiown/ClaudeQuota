@@ -9,6 +9,7 @@ const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
 const { isAutoLaunchEnabled, setAutoLaunchEnabled, enableAutoLaunchOnFirstRun } = require('./autostart');
+const { getDisplayStyle, setDisplayStyle } = require('./settings');
 const { showAboutDialog } = require('./about');
 const { initAutoUpdater, quitOrInstall } = require('./updater');
 
@@ -46,6 +47,8 @@ function bootstrap() {
     isDark: nativeTheme.shouldUseDarkColors,
     getAutoLaunchEnabled: isAutoLaunchEnabled,
     onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
+    getDisplayStyle,
+    onToggleDisplayStyle: () => setDisplayStyle(getDisplayStyle() === 'bars' ? 'circles' : 'bars'),
     onOpenLog: () => shell.openPath(log.transports.file.getFile().path),
     onAbout: showAboutDialog,
     onQuit: quitOrInstall,

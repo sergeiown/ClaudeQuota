@@ -5,7 +5,12 @@
 
 const { Tray, nativeImage } = require('electron');
 
-const { renderFractionIcon, renderStatusIcon } = require('../icon/render');
+const { renderFractionIcon, renderRingIcon, renderStatusIcon } = require('../icon/render');
+
+const RENDER_FN_BY_STYLE = {
+  bars: renderFractionIcon,
+  circles: renderRingIcon,
+};
 const { buildTrayMenu } = require('./menu');
 
 const STATUS_MESSAGES = {
@@ -90,6 +95,8 @@ function formatCountdown(resetsAtIso) {
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
+ * @param {() => 'bars'|'circles'} opts.getDisplayStyle
+ * @param {() => void} opts.onToggleDisplayStyle
  * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout
  * @param {() => void} opts.onQuit
@@ -101,6 +108,8 @@ function formatCountdown(resetsAtIso) {
 function createTrayController({
   getAutoLaunchEnabled,
   onToggleAutoLaunch,
+  getDisplayStyle,
+  onToggleDisplayStyle,
   onOpenLog,
   onAbout,
   onQuit,
@@ -122,6 +131,19 @@ function createTrayController({
           onToggleAutoLaunch();
           rebuildMenu();
         },
+        displayStyle: getDisplayStyle(),
+        onToggleDisplayStyle: () => {
+          onToggleDisplayStyle();
+          rebuildMenu();
+          // Re-render immediately with the new style rather than waiting
+          // for the next snapshot/status update - the point of a menu
+          // toggle is to see the effect right away.
+          if (lastSnapshot) {
+            showSnapshot(lastSnapshot);
+          } else if (lastStatusKind) {
+            showStatus(lastStatusKind);
+          }
+        },
         onOpenLog,
         onAbout,
         onQuit,
@@ -141,8 +163,9 @@ function createTrayController({
 
     const numerator = snapshot.fiveHour ? snapshot.fiveHour.utilization : 0;
     const denominator = snapshot.sevenDay ? snapshot.sevenDay.utilization : 0;
+    const renderFn = RENDER_FN_BY_STYLE[getDisplayStyle()] || renderFractionIcon;
 
-    tray.setImage(buildNativeImage(renderFractionIcon, { numerator, denominator, isDark: currentIsDark }));
+    tray.setImage(buildNativeImage(renderFn, { numerator, denominator, isDark: currentIsDark }));
 
     const header = formatHeader(snapshot.fetchedAt);
 
