@@ -18,8 +18,11 @@ const LIGHT = {
   errorForeground: '#b3261e',
   // Fill/track boundary divider in the tray icon bars - softer dark gray
   // rather than near-black `foreground`, which read as too harsh/heavy a
-  // line for what's meant to be a subtle boundary marker.
-  divider: '#555555',
+  // line for what's meant to be a subtle boundary marker. Partial opacity
+  // so it stays proportional to the now near-invisible track below - a
+  // solid line would otherwise be the most prominent thing in the empty
+  // part of the bar, backwards from the point of making track subtle.
+  divider: 'rgba(85, 85, 85, 0.5)',
   // Track (unfilled) tint per bar, so the two fill bars stay visually
   // distinct from each other even at 0% - blue for the 5-hour window,
   // purple for the 7-day one. Independent of the fill-level colors below.
@@ -34,11 +37,12 @@ const LIGHT = {
   // color); a pale, low-saturation track sidesteps that regardless of how
   // bright the fill is. render.js also draws a thin separator line at the
   // fill/track boundary as a second, color-independent guarantee.
-  // Lighter/more transparent than the previous attempt - once the fill
-  // colors became vivid, the track only needs to be present as a subtle
-  // backdrop, not compete for attention.
-  trackFiveHour: 'rgba(120, 160, 210, 0.3)',
-  trackSevenDay: 'rgba(195, 165, 220, 0.3)',
+  // Pushed to near-invisible per feedback that the track still read as a
+  // colored "fill" over the taskbar instead of a barely-there boundary
+  // marker - now it's just enough tint to tell the two bars apart up
+  // close, not a competing block of color at a glance.
+  trackFiveHour: 'rgba(120, 160, 210, 0.12)',
+  trackSevenDay: 'rgba(195, 165, 220, 0.12)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
   // User-picked palette (pure, high-saturation primaries) after two earlier
@@ -56,11 +60,10 @@ const DARK = {
   foreground: '#f0f0f0',
   separator: 'rgba(240, 240, 240, 0.6)',
   errorForeground: '#ff8a80',
-  // Unchanged from `foreground` - no complaint about this one being too
-  // harsh (it's already an off-white, not stark white).
-  divider: '#f0f0f0',
-  trackFiveHour: 'rgba(100, 165, 255, 0.35)',
-  trackSevenDay: 'rgba(200, 155, 255, 0.35)',
+  // Same partial-opacity reasoning as the light theme's divider above.
+  divider: 'rgba(240, 240, 240, 0.5)',
+  trackFiveHour: 'rgba(100, 165, 255, 0.08)',
+  trackSevenDay: 'rgba(200, 155, 255, 0.08)',
   // Green/yellow unchanged from light theme - both already have strong
   // contrast against a near-black taskbar. Red alone is brightened: pure
   // #E00000 has low luminance and reads as muddy/near-invisible against a
