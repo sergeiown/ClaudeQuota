@@ -8,12 +8,12 @@
 
 A Windows tray app that shows your Claude usage limits at a glance, in either of two styles - pick whichever from the tray menu:
 
-- **Bars** (default): two fill bars, one for the 5-hour window and one for the 7-day window.
-- **Circles**: the same two values as concentric ring gauges - the bigger outer ring is the 5-hour window, the smaller inner one the 7-day window.
+- **Horizontal bars** (default): two fill bars, one for the 5-hour window and one for the 7-day window.
+- **Vertical bars**: the same two values as vertical columns side by side, left for the 5-hour window, right for the 7-day one.
 
 Hovering the icon shows the exact percentages and reset times either way.
 
-Each bar/ring's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds.
+Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds.
 
 All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
 
@@ -44,7 +44,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 ## Tray menu
 
-Right-clicking the icon shows: start with Windows (on by default after install, toggleable), display style (switches between bars and circles, remembered across restarts), open log, about, and quit.
+Right-clicking the icon shows: start with Windows (on by default after install, toggleable), display style (switches between horizontal and vertical bars, remembered across restarts), open log, about, and quit.
 
 ## Status
 

@@ -48,7 +48,7 @@ function bootstrap() {
     getAutoLaunchEnabled: isAutoLaunchEnabled,
     onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
     getDisplayStyle,
-    onToggleDisplayStyle: () => setDisplayStyle(getDisplayStyle() === 'bars' ? 'circles' : 'bars'),
+    onToggleDisplayStyle: () => setDisplayStyle(getDisplayStyle() === 'bars' ? 'columns' : 'bars'),
     onOpenLog: () => shell.openPath(log.transports.file.getFile().path),
     onAbout: showAboutDialog,
     onQuit: quitOrInstall,
