@@ -119,8 +119,12 @@ function renderColumnsIcon({ numerator, denominator, size, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
-// Larger, anti-aliased rounded-pill renders used only by the popup - the
+// Larger, anti-aliased rounded-rect renders used only by the popup - the
 // tray icon versions above stay pixel-snapped for crispness at 16px.
+
+// Fixed, not proportional to thickness - just enough to soften the corners
+// without reading as a pill.
+const SUBTLE_RADIUS = 5;
 
 function roundedRectPath(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);
@@ -155,7 +159,7 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
   const clamped = clampPercent(percent);
   const filledWidth = Math.round((width * clamped) / 100);
   const fillColor = fillColorFor(clamped, palette);
-  const radius = height / 8;
+  const radius = SUBTLE_RADIUS;
 
   castRoundedShadow(ctx, x, y, width, height, radius);
 
@@ -188,7 +192,7 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
   const clamped = clampPercent(percent);
   const filledHeight = Math.round((height * clamped) / 100);
   const fillColor = fillColorFor(clamped, palette);
-  const radius = width / 8;
+  const radius = SUBTLE_RADIUS;
 
   castRoundedShadow(ctx, x, y, width, height, radius);
 

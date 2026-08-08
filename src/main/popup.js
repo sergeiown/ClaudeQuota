@@ -39,24 +39,26 @@ function estimateTextWidth(text) {
 
 /**
  * The vertical label in the "columns" style is a rotated block of text, so
- * its rendered length (not just its line count) directly sets how tall its
- * lane - and therefore the whole popup window - needs to be. Both columns'
- * lanes share the longer of the two estimates, so the two labels always
- * reach the same height as each other regardless of which one is actually
- * longer this time - mismatched lane heights between the two columns read
- * as "text and bars at different heights".
+ * its rendered length can need more room than the column image is tall.
+ * The label's lane is always exactly PREVIEW_COLUMN_HEIGHT - matching the
+ * image - so their tops and bottoms line up exactly regardless of text
+ * length; a longer label instead overflows upward past that shared top
+ * edge, into `overflowAbove` extra space reserved above the whole row.
+ * Both columns get the same overflowAbove (the longer of the two labels),
+ * so the two labels also stay level with each other.
  */
-function columnsLaneHeight(lineOne, lineTwo) {
+function columnsOverflowAbove(lineOne, lineTwo) {
   const longest = Math.max(estimateTextWidth(lineOne), estimateTextWidth(lineTwo));
-  return Math.max(PREVIEW_COLUMN_HEIGHT, Math.ceil(longest) + 16);
+  return Math.max(0, Math.ceil(longest) + 16 - PREVIEW_COLUMN_HEIGHT);
 }
 
 function computeDimensions({ style, lineOne, lineTwo }) {
   if (style === 'columns') {
-    const laneHeight = columnsLaneHeight(lineOne, lineTwo);
-    return { width: COLUMNS_WIDTH, height: HEADER_RESERVED_HEIGHT + laneHeight + BODY_PADDING, laneHeight };
+    const overflowAbove = columnsOverflowAbove(lineOne, lineTwo);
+    const height = HEADER_RESERVED_HEIGHT + overflowAbove + PREVIEW_COLUMN_HEIGHT + BODY_PADDING;
+    return { width: COLUMNS_WIDTH, height, overflowAbove };
   }
-  return { width: BARS_WIDTH, height: BARS_HEIGHT, laneHeight: null };
+  return { width: BARS_WIDTH, height: BARS_HEIGHT, overflowAbove: null };
 }
 
 function escapeHtml(text) {
@@ -69,7 +71,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
-  const { laneHeight } = computeDimensions({ style, lineOne, lineTwo });
+  const { overflowAbove } = computeDimensions({ style, lineOne, lineTwo });
 
   const textColor = isDark ? '#f4f4f5' : '#1a1a1a';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
@@ -84,14 +86,14 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   const content =
     style === 'columns'
       ? `
-    <div class="col-group">
+    <div class="col-group" style="margin-top:${overflowAbove}px">
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageOne}">
-        <div class="label-lane" style="height:${laneHeight}px"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
+        <div class="label-lane"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
       </div>
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageTwo}">
-        <div class="label-lane" style="height:${laneHeight}px"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
+        <div class="label-lane"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
       </div>
     </div>`
       : `
@@ -159,13 +161,15 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   .col-block {
     display: flex;
     flex-direction: row;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 8px;
   }
   .col-img { width: ${PREVIEW_COLUMN_WIDTH}px; height: ${PREVIEW_COLUMN_HEIGHT}px; }
   .label-lane {
     position: relative;
     width: ${LABEL_LANE_WIDTH}px;
+    height: ${PREVIEW_COLUMN_HEIGHT}px;
+    overflow: visible;
   }
   .label-lane .label.vertical {
     position: absolute;
