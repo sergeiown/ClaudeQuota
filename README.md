@@ -21,9 +21,9 @@ All of these colors, plus the icon itself, follow your Windows light/dark theme 
 |---|---|---|
 | 5-hour track | ![](https://img.shields.io/badge/-%20-78A0D2) `#78A0D2` (30% opacity) | ![](https://img.shields.io/badge/-%20-64A5FF) `#64A5FF` (35% opacity) |
 | 7-day track | ![](https://img.shields.io/badge/-%20-C3A5DC) `#C3A5DC` (30% opacity) | ![](https://img.shields.io/badge/-%20-C89BFF) `#C89BFF` (35% opacity) |
-| Fill, 0-50% | ![](https://img.shields.io/badge/-%20-00C853) `#00C853` | ![](https://img.shields.io/badge/-%20-00E676) `#00E676` |
-| Fill, 51-80% | ![](https://img.shields.io/badge/-%20-FF8F00) `#FF8F00` | ![](https://img.shields.io/badge/-%20-FFAB00) `#FFAB00` |
-| Fill, 81-100% | ![](https://img.shields.io/badge/-%20-FF3D00) `#FF3D00` | ![](https://img.shields.io/badge/-%20-FF6E40) `#FF6E40` |
+| Fill, 0-50% | ![](https://img.shields.io/badge/-%20-00C800) `#00C800` | ![](https://img.shields.io/badge/-%20-00C800) `#00C800` |
+| Fill, 51-80% | ![](https://img.shields.io/badge/-%20-FFC800) `#FFC800` | ![](https://img.shields.io/badge/-%20-FFC800) `#FFC800` |
+| Fill, 81-100% | ![](https://img.shields.io/badge/-%20-E00000) `#E00000` | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` |
 
 ## How it works
 

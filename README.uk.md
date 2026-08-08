@@ -21,9 +21,9 @@
 |---|---|---|
 | Трек 5-годинного вікна | ![](https://img.shields.io/badge/-%20-78A0D2) `#78A0D2` (30% прозорості) | ![](https://img.shields.io/badge/-%20-64A5FF) `#64A5FF` (35% прозорості) |
 | Трек тижневого вікна | ![](https://img.shields.io/badge/-%20-C3A5DC) `#C3A5DC` (30% прозорості) | ![](https://img.shields.io/badge/-%20-C89BFF) `#C89BFF` (35% прозорості) |
-| Заповнення, 0-50% | ![](https://img.shields.io/badge/-%20-00C853) `#00C853` | ![](https://img.shields.io/badge/-%20-00E676) `#00E676` |
-| Заповнення, 51-80% | ![](https://img.shields.io/badge/-%20-FF8F00) `#FF8F00` | ![](https://img.shields.io/badge/-%20-FFAB00) `#FFAB00` |
-| Заповнення, 81-100% | ![](https://img.shields.io/badge/-%20-FF3D00) `#FF3D00` | ![](https://img.shields.io/badge/-%20-FF6E40) `#FF6E40` |
+| Заповнення, 0-50% | ![](https://img.shields.io/badge/-%20-00C800) `#00C800` | ![](https://img.shields.io/badge/-%20-00C800) `#00C800` |
+| Заповнення, 51-80% | ![](https://img.shields.io/badge/-%20-FFC800) `#FFC800` | ![](https://img.shields.io/badge/-%20-FFC800) `#FFC800` |
+| Заповнення, 81-100% | ![](https://img.shields.io/badge/-%20-E00000) `#E00000` | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` |
 
 ## Як це працює
 
