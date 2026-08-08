@@ -22,17 +22,11 @@ function readSettings() {
   }
 }
 
-/**
- * @returns {'bars'|'columns'}
- */
 function getDisplayStyle() {
   const style = readSettings().displayStyle;
   return DISPLAY_STYLES.includes(style) ? style : DEFAULT_DISPLAY_STYLE;
 }
 
-/**
- * @param {'bars'|'columns'} style
- */
 function setDisplayStyle(style) {
   if (!DISPLAY_STYLES.includes(style)) {
     throw new Error(`unknown display style: ${style}`);

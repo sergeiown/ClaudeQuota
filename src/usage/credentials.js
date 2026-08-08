@@ -10,11 +10,7 @@ const path = require('path');
 const { CREDENTIALS_PATH } = require('../main/constants');
 const { CredentialsError } = require('./errors');
 
-// Intentionally does not `require('electron')` so this module (and
-// scripts/check-usage.js, which runs it under plain `node`) works outside
-// an Electron process. This happens to resolve to the exact same folder
-// Electron's `app.getPath('userData')` would use by default on Windows
-// (%APPDATA%\<productName>), since that default is just APPDATA + app name.
+// No require('electron') here - keeps this (and scripts/check-usage.js) runnable under plain `node`.
 function getDefaultCacheDir() {
   const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
   return path.join(appData, 'ClaudeQuota');
@@ -43,8 +39,6 @@ function normalize(claudeAiOauth) {
     accessToken: claudeAiOauth.accessToken,
     refreshToken: claudeAiOauth.refreshToken,
     expiresAt: claudeAiOauth.expiresAt,
-    // Some accounts/CLI versions may not set this; treat as "far in the future"
-    // rather than crashing, the field is only used to short-circuit refresh attempts.
     refreshTokenExpiresAt:
       typeof claudeAiOauth.refreshTokenExpiresAt === 'number'
         ? claudeAiOauth.refreshTokenExpiresAt
@@ -69,14 +63,8 @@ async function readParsedCredentialsFile() {
   }
 }
 
-/**
- * Reads ~/.claude/.credentials.json fresh from disk (never cached) and
- * returns the normalized OAuth token set. Never writes to this file - it
- * belongs to the `claude` CLI, not this app.
- *
- * Retries once after a short delay on a JSON parse failure, since the CLI
- * can be caught mid-write when it rotates the file itself.
- */
+// This app never writes to CREDENTIALS_PATH - it belongs to the `claude` CLI.
+// Retries once on a parse failure in case the CLI is mid-write rotating the file.
 async function readCredentials() {
   let parsed;
   try {
@@ -105,10 +93,6 @@ async function readTokenCache() {
   }
 }
 
-/**
- * Atomically persists a refreshed token set to a private cache, separate
- * from the CLI-owned credentials file (write tmp file, then rename).
- */
 async function saveRefreshedTokens(tokens) {
   const dir = path.dirname(TOKEN_CACHE_PATH);
   await fs.mkdir(dir, { recursive: true });
@@ -117,12 +101,6 @@ async function saveRefreshedTokens(tokens) {
   await fs.rename(tmpPath, TOKEN_CACHE_PATH);
 }
 
-/**
- * Returns the freshest known token set by comparing the CLI's credentials
- * file against our private cache and keeping whichever has the later
- * expiresAt. Covers the case where the user re-logged in via the CLI (or
- * the CLI refreshed on its own) while this app was holding an older token.
- */
 async function getActiveTokens() {
   const fromFile = await readCredentials();
   const fromCache = await readTokenCache();

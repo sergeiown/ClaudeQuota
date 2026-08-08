@@ -3,11 +3,6 @@
 
 'use strict';
 
-// Shared human-readable formatting for usage data - used by both the tray
-// tooltip (tray.js) and the click-to-open popup (popup.js), so the two
-// never drift apart from showing slightly different wording for the same
-// snapshot.
-
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -22,7 +17,6 @@ function formatHeader(fetchedAt) {
   return `ClaudeQuota as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/** Returns e.g. "resets in 2 hours 15 minutes (14:30)" or "expires in 4 minutes (14:30)". */
 function formatCountdown(resetsAtIso) {
   if (!resetsAtIso) return 'no reset time';
   const resetsAt = new Date(resetsAtIso);
@@ -57,7 +51,6 @@ function formatCountdown(resetsAtIso) {
   return `resets in ${totalDays} day${totalDays !== 1 ? 's' : ''}${hourPart}`;
 }
 
-/** Same wording as the tray tooltip's per-window line, reused by the popup. */
 function formatUsageLine(label, window) {
   return window ? `${label}: ${window.utilization}% - ${formatCountdown(window.resetsAt)}` : `${label}: no data`;
 }

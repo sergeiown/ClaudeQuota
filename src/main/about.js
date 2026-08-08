@@ -7,14 +7,9 @@ const path = require('path');
 const { app, dialog, shell, nativeImage } = require('electron');
 const { REPO_URL } = require('./constants');
 
-// build/icon-source.png must be listed in electron-builder.yml's `files`
-// so it actually ships inside the packaged app, not just the dev checkout.
+// Must also be listed in electron-builder.yml's `files` to ship in the packaged app.
 const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon-source.png');
 
-/**
- * `dialog.showMessageBox` needs no BrowserWindow parent and no renderer -
- * this is the entire "About" UI for the app.
- */
 async function showAboutDialog() {
   const buttons = REPO_URL ? ['Close', 'Repository on GitHub'] : ['Close'];
 

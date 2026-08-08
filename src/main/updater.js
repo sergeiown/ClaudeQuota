@@ -7,29 +7,14 @@ const { app, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('./logger');
 
-// Overridable via env var purely for local testing against real GitHub
-// Releases without waiting the real delay - never set in production.
+// Never set CLAUDEQUOTA_UPDATE_CHECK_DELAY_MS in production - local testing only.
 const INITIAL_CHECK_DELAY_MS = Number(process.env.CLAUDEQUOTA_UPDATE_CHECK_DELAY_MS) || 45_000;
-const RECHECK_INTERVAL_MS = 5 * 60 * 60_000; // 5 hours
+const RECHECK_INTERVAL_MS = 5 * 60 * 60_000;
 
-// Don't ask again about a version the user already said "Later" to in
-// this session - but a newer version than that still gets a fresh prompt.
 let dismissedVersion = null;
-// Set once the user has consented to install a downloaded update but chose
-// "Later" - installed silently on the next normal quit, since consent was
-// already given, not on a fresh unrelated decision.
 let pendingInstall = false;
-// Distinguishes a background check failing (never bother the user) from a
-// failure after they explicitly asked to download (they're waiting on it).
 let userRequestedDownload = false;
 
-/**
- * Wires up electron-updater with a two-step consent flow: one dialog
- * before downloading, another before installing. autoDownload/
- * autoInstallOnAppQuit are both off so nothing happens without an explicit
- * click. No-ops outside a packaged build - electron-updater needs a real
- * publish feed (or a dev-app-update.yml) to have anything to check against.
- */
 function initAutoUpdater() {
   if (!app.isPackaged) {
     log.info('updater: skipped (not packaged)');
@@ -86,9 +71,6 @@ function initAutoUpdater() {
     if (result.response === 0) {
       autoUpdater.quitAndInstall();
     } else {
-      // Consent to install was already given - just deferred. Installed
-      // silently on the next normal quit via quitOrInstall() below, not
-      // re-prompted.
       pendingInstall = true;
     }
   });
@@ -105,20 +87,12 @@ function initAutoUpdater() {
         buttons: ['Close'],
       });
     }
-    // Otherwise (background check failure - no internet, GitHub
-    // unreachable, etc.) stay quiet; the next scheduled check will retry.
   });
 
   setTimeout(() => autoUpdater.checkForUpdates(), INITIAL_CHECK_DELAY_MS);
   setInterval(() => autoUpdater.checkForUpdates(), RECHECK_INTERVAL_MS);
 }
 
-/**
- * Called from the "Quit" menu item instead of app.quit() directly. If the
- * user already consented to installing a downloaded update but deferred
- * it, this installs it now - that's honoring an earlier explicit "yes",
- * not a new silent decision. Otherwise quits normally.
- */
 function quitOrInstall() {
   if (pendingInstall) {
     autoUpdater.quitAndInstall();

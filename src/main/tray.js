@@ -23,10 +23,8 @@ const STATUS_MESSAGES = {
   offline: 'No connection to api.anthropic.com.',
 };
 
-// Non-happy-path statuses that still get a real status *icon* (question
-// mark / exclamation mark). Anything else (offline, rate-limited) keeps
-// showing the last known fraction and only changes the tooltip - see
-// poller.js for why transient failures shouldn't blink the icon.
+// Non-happy-path statuses that get a real status icon; anything else (offline,
+// rate-limited) keeps showing the last known fraction and only changes the tooltip.
 const STATUS_ICON_KIND = {
   'missing-credentials': 'missing-credentials',
   'refresh-token-expired': 'missing-credentials',
@@ -42,10 +40,6 @@ function buildNativeImage(renderFn, args) {
 }
 
 /**
- * Owns the single Tray instance for the app's lifetime: icon bitmap,
- * tooltip, context menu, and the click-to-open popup. No other
- * BrowserWindow anywhere else in the app.
- *
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
@@ -54,10 +48,8 @@ function buildNativeImage(renderFn, args) {
  * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout
  * @param {() => void} opts.onQuit
- * @param {() => void} [opts.onRequestRefresh] called when the user opens
- *   the context menu or the popup, to allow an on-demand refresh (still
- *   gated by the 180s cooldown inside poller.js, never bypasses it)
- * @param {boolean} opts.isDark initial theme
+ * @param {() => void} [opts.onRequestRefresh]
+ * @param {boolean} opts.isDark
  */
 function createTrayController({
   getAutoLaunchEnabled,
@@ -91,9 +83,6 @@ function createTrayController({
         onToggleDisplayStyle: () => {
           onToggleDisplayStyle();
           rebuildMenu();
-          // Re-render immediately with the new style rather than waiting
-          // for the next snapshot/status update - the point of a menu
-          // toggle is to see the effect right away.
           if (lastSnapshot) {
             showSnapshot(lastSnapshot);
           } else if (lastStatusKind) {
@@ -108,7 +97,6 @@ function createTrayController({
   }
   rebuildMenu();
 
-  /** Current state, reshaped into what popup.js needs to render itself. */
   function buildPopupArgs() {
     if (lastSnapshot) {
       const numerator = lastSnapshot.fiveHour ? lastSnapshot.fiveHour.utilization : 0;
@@ -165,9 +153,6 @@ function createTrayController({
     lastStatusKind = kind;
 
     if ((kind === 'offline' || kind === 'rate-limited') && lastSnapshot) {
-      // Keep the last known numbers on screen - only the tooltip changes.
-      // Avoids blinking the icon on every transient network hiccup. The
-      // popup (if open) is left showing the same last-known data too.
       tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind]}`);
       return;
     }

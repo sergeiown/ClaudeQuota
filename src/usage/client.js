@@ -25,14 +25,6 @@ function normalizeUsageResponse(body) {
   };
 }
 
-/**
- * GET /api/oauth/usage - undocumented Anthropic endpoint. A missing or
- * unexpected User-Agent gets a 429 from the server, so this header is not
- * optional the way it would normally be.
- *
- * @param {string} accessToken
- * @returns {Promise<UsageSnapshot>}
- */
 async function fetchUsage(accessToken) {
   const response = await fetch(USAGE_API_URL, {
     method: 'GET',

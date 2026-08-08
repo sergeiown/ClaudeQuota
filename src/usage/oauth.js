@@ -22,20 +22,10 @@ function normalizeRefreshResponse(body) {
     accessToken,
     refreshToken,
     expiresAt: Date.now() + expiresInSec * 1000,
-    // The token endpoint doesn't tell us the refresh token's own expiry;
-    // callers should keep whatever refreshTokenExpiresAt they already had.
   };
 }
 
-/**
- * Exchanges a refresh token for a new access token, mirroring what the
- * `claude` CLI does on `claude update` / re-login. The token endpoint and
- * client_id are not officially documented - see scripts/check-refresh.js
- * to verify this against a real account before relying on it in a release.
- *
- * @param {string} refreshToken
- * @returns {Promise<{accessToken: string, refreshToken: string, expiresAt: number}>}
- */
+// Not officially documented - verify against scripts/check-refresh.js before relying on it.
 async function refreshAccessToken(refreshToken) {
   let response;
   try {

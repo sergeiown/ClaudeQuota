@@ -4,34 +4,19 @@
 'use strict';
 
 const { BrowserWindow, screen } = require('electron');
-const { renderFractionIcon, renderColumnsIcon } = require('../icon/render');
+const { renderBarPreview, renderColumnPreview } = require('../icon/render');
 
 const RENDER_FN_BY_STYLE = {
-  bars: renderFractionIcon,
-  columns: renderColumnsIcon,
+  bars: renderBarPreview,
+  columns: renderColumnPreview,
 };
 
-// The bars/columns image is rendered at exactly this size and displayed
-// 1:1 in the popup - no CSS scaling, so no risk of blurring the crisp
-// pixel-snapped edges render.js already guarantees for the tray icon.
-// 224 = 16 * 14, keeping every internal cell math in render.js (which is
-// all `size / 16` based) landing on whole pixels here too.
-const IMAGE_SIZE = 224;
-
-const WINDOW_WIDTH = 320;
-// Tall enough for the header + image + two label lines even if one wraps
-// to two lines (usage lines can run to ~50 characters, e.g. "7d: 87% -
-// expires in 18 hours 40 minutes (09:10)" - verified via
-// scripts/verify-popup.js that this genuinely happens, not a hypothetical).
-const WINDOW_HEIGHT = 400;
 const TRAY_GAP = 8;
 
-// Solid legend-dot colors identifying which line is which - deliberately
-// not the same near-transparent rgba used for the icon's own track tint
-// (see theme.js), since a dot that faint wouldn't read as a color swatch
-// at all against the popup's own background.
-const DOT_FIVE_HOUR = '#4C86D6';
-const DOT_SEVEN_DAY = '#A56AD6';
+const DIMENSIONS = {
+  bars: { width: 380, height: 400 },
+  columns: { width: 340, height: 540 },
+};
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({
@@ -40,118 +25,137 @@ function escapeHtml(text) {
 }
 
 function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne, lineTwo }) {
-  const renderFn = RENDER_FN_BY_STYLE[style] || renderFractionIcon;
-  const imageBuffer = renderFn({ numerator, denominator, size: IMAGE_SIZE, isDark });
-  const imageBase64 = imageBuffer.toString('base64');
+  const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
+  const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
+  const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
 
-  // Labels always stack vertically regardless of bar/column orientation -
-  // a side-by-side layout for the columns style was tried and verified
-  // (via scripts/verify-popup.js) to overflow the window and clip text,
-  // since usage lines can run to ~40 characters. Stacked always fits and
-  // still reads top-to-bottom in the same 5h-then-7d order as everywhere
-  // else (tooltip, bars).
-  const textColor = isDark ? '#f0f0f0' : '#1a1a1a';
-  const mutedColor = isDark ? 'rgba(240,240,240,0.65)' : 'rgba(26,26,26,0.65)';
-  const backgroundColor = isDark ? 'rgba(30,30,30,0.98)' : 'rgba(255,255,255,0.98)';
-  const borderColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+  const textColor = isDark ? '#f4f4f5' : '#1a1a1a';
+  const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
+  const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
+  const gradient = isDark
+    ? 'linear-gradient(160deg, rgba(46,46,50,0.97), rgba(24,24,27,0.96))'
+    : 'linear-gradient(160deg, rgba(255,255,255,0.97), rgba(240,241,245,0.95))';
+  const shadow = isDark
+    ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 10px 30px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)'
+    : '0 1px 0 rgba(255,255,255,0.6) inset, 0 10px 30px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
+
+  const content =
+    style === 'columns'
+      ? `
+    <div class="col-group">
+      <div class="col-block">
+        <img class="col-img" src="data:image/png;base64,${imageOne}">
+        <div class="label vertical">${escapeHtml(lineOne)}</div>
+      </div>
+      <div class="col-block">
+        <img class="col-img" src="data:image/png;base64,${imageTwo}">
+        <div class="label vertical">${escapeHtml(lineTwo)}</div>
+      </div>
+    </div>`
+      : `
+    <div class="bar-stack">
+      <div class="bar-block">
+        <img class="bar-img" src="data:image/png;base64,${imageOne}">
+        <div class="label">${escapeHtml(lineOne)}</div>
+      </div>
+      <div class="bar-block">
+        <img class="bar-img" src="data:image/png;base64,${imageTwo}">
+        <div class="label">${escapeHtml(lineTwo)}</div>
+      </div>
+    </div>`;
 
   return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <style>
-  html, body { margin: 0; padding: 0; background: transparent; }
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
   body {
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    padding: 16px;
-    font-family: 'Segoe UI', sans-serif;
+    padding: 18px;
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+    font-size: 14px;
     color: ${textColor};
-    background: ${backgroundColor};
+    background: ${gradient};
     border: 1px solid ${borderColor};
-    border-radius: 10px;
+    border-radius: 14px;
+    box-shadow: ${shadow};
     display: flex;
     flex-direction: column;
     align-items: center;
     -webkit-user-select: none;
-    overflow: hidden;
   }
   .header {
-    font-size: 12px;
-    color: ${mutedColor};
-    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: ${textColor};
+    margin-bottom: 12px;
     text-align: center;
   }
-  .bars {
-    width: ${IMAGE_SIZE}px;
-    height: ${IMAGE_SIZE}px;
-    image-rendering: pixelated;
-    margin-bottom: 14px;
-  }
-  .labels {
+  .label { color: ${mutedColor}; font-size: 14px; line-height: 1.4; }
+  .bar-stack {
     display: flex;
     flex-direction: column;
+    gap: 18px;
+  }
+  .bar-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 6px;
   }
-  .label {
+  .bar-img { width: 320px; height: 90px; }
+  .bar-block .label { text-align: center; }
+  .col-group {
     display: flex;
+    flex-direction: row;
+    gap: 28px;
+    align-items: flex-start;
+  }
+  .col-block {
+    display: flex;
+    flex-direction: row;
     align-items: flex-start;
     gap: 8px;
-    font-size: 13px;
-    line-height: 1.35;
-    text-align: left;
-    max-width: 100%;
   }
-  .dot {
-    width: 10px;
-    height: 10px;
-    margin-top: 3px;
-    border-radius: 2px;
-    flex-shrink: 0;
+  .col-img { width: 90px; height: 320px; }
+  .col-block .label.vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: nowrap;
   }
 </style>
 </head>
 <body>
   <div class="header">${escapeHtml(headerText)}</div>
-  <img class="bars" src="data:image/png;base64,${imageBase64}">
-  <div class="labels">
-    <div class="label"><span class="dot" style="background:${DOT_FIVE_HOUR}"></span>${escapeHtml(lineOne)}</div>
-    ${lineTwo ? `<div class="label"><span class="dot" style="background:${DOT_SEVEN_DAY}"></span>${escapeHtml(lineTwo)}</div>` : ''}
-  </div>
+  ${content}
 </body>
 </html>`;
 }
 
-function positionNearTray(win, trayBounds) {
+function positionNearTray(win, trayBounds, dimensions) {
   const display = screen.getDisplayMatching(trayBounds);
   const { workArea } = display;
 
-  let x = Math.round(trayBounds.x + trayBounds.width / 2 - WINDOW_WIDTH / 2);
-  x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - WINDOW_WIDTH));
+  let x = Math.round(trayBounds.x + trayBounds.width / 2 - dimensions.width / 2);
+  x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - dimensions.width));
 
-  // Above the icon by default (the common bottom-taskbar case); below it
-  // if there isn't enough room above on this display (e.g. a top taskbar).
-  let y = trayBounds.y - WINDOW_HEIGHT - TRAY_GAP;
+  let y = trayBounds.y - dimensions.height - TRAY_GAP;
   if (y < workArea.y) {
     y = trayBounds.y + trayBounds.height + TRAY_GAP;
   }
 
-  win.setBounds({ x, y, width: WINDOW_WIDTH, height: WINDOW_HEIGHT });
+  win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
 /**
- * Owns the single popup window - an enlarged, live copy of the tray icon's
- * bars/columns plus the same text the tooltip shows, opened by left-
- * clicking the tray icon. Built as a frameless, always-on-top window that
- * hides itself on blur, same interaction pattern as a native flyout.
- *
- * The window's content is a single self-contained `data:` HTML document
- * rebuilt from scratch on every render - there's no persistent renderer
- * state to keep in sync, so this is simpler than IPC/preload for content
- * this small, and the embedded image reuses the exact same render.js
- * functions the tray icon itself uses, so the two can never visually
- * drift apart.
+ * Owns the single popup window opened by left-clicking the tray icon - an
+ * enlarged, live copy of the tray icon's bars/columns plus the tooltip text.
+ * The window's content is a self-contained `data:` HTML document rebuilt
+ * from scratch on every render, reusing render.js's own drawing functions so
+ * the popup and tray icon can never visually drift apart.
  */
 function createPopupController() {
   let win = null;
@@ -159,8 +163,6 @@ function createPopupController() {
   function ensureWindow() {
     if (win && !win.isDestroyed()) return win;
     win = new BrowserWindow({
-      width: WINDOW_WIDTH,
-      height: WINDOW_HEIGHT,
       show: false,
       frame: false,
       resizable: false,
@@ -186,7 +188,7 @@ function createPopupController() {
       return;
     }
     render(args);
-    positionNearTray(w, trayBounds);
+    positionNearTray(w, trayBounds, DIMENSIONS[args.style] || DIMENSIONS.bars);
     w.show();
     w.focus();
   }
@@ -209,4 +211,5 @@ function createPopupController() {
 module.exports = {
   createPopupController,
   buildHtml,
+  DIMENSIONS,
 };

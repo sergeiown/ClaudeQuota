@@ -11,7 +11,7 @@ A Windows tray app that shows your Claude usage limits at a glance, in either of
 - **Horizontal bars** (default): two fill bars, one for the 5-hour window and one for the 7-day window.
 - **Vertical bars**: the same two values as vertical columns side by side, left for the 5-hour window, right for the 7-day one.
 
-Hovering the icon shows the exact percentages and reset times either way.
+Hovering the icon shows the exact percentages and reset times either way. Left-clicking it opens a small popup with an enlarged, more detailed view of the same bars/columns, matching whichever display style is currently selected.
 
 Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds.
 

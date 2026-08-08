@@ -5,18 +5,6 @@
 
 const { Menu } = require('electron');
 
-/**
- * The tray context menu.
- *
- * @param {object} opts
- * @param {boolean} opts.autoLaunchEnabled
- * @param {() => void} opts.onToggleAutoLaunch
- * @param {'bars'|'columns'} opts.displayStyle
- * @param {() => void} opts.onToggleDisplayStyle
- * @param {() => void} opts.onOpenLog
- * @param {() => void} opts.onAbout
- * @param {() => void} opts.onQuit
- */
 function buildTrayMenu({
   autoLaunchEnabled,
   onToggleAutoLaunch,

@@ -3,18 +3,17 @@
 
 'use strict';
 
-// Renders the popup's HTML in a hidden Electron window and screenshots it -
-// a real render check of the embedded bars/columns image plus labels,
-// not just reading the markup. Must run under the actual electron.exe
-// binary, not plain node. Run with:
-//
+// Renders the popup's HTML in a hidden Electron window and screenshots it.
+// Must run under electron.exe, not plain node. Run with:
 //   electron scripts/verify-popup.js
+// Reuses one window across cases - a freshly created BrowserWindow per case
+// can fail to load a data: URL here.
 
 const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { buildHtml } = require('../src/main/popup');
+const { buildHtml, DIMENSIONS } = require('../src/main/popup');
 
 const CASES = [
   { name: 'bars-light', style: 'bars', isDark: false },
@@ -25,9 +24,11 @@ const CASES = [
 
 app.whenReady().then(async () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claudequota-popup-preview-'));
-  const win = new BrowserWindow({ width: 320, height: 400, show: false, webPreferences: { offscreen: true } });
+  const win = new BrowserWindow({ show: false, width: 500, height: 300 });
 
   for (const c of CASES) {
+    const dimensions = DIMENSIONS[c.style] || DIMENSIONS.bars;
+    win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
     const html = buildHtml({
       numerator: 42,
       denominator: 87,
@@ -43,6 +44,7 @@ app.whenReady().then(async () => {
     fs.writeFileSync(path.join(outDir, `${c.name}.png`), image.toPNG());
   }
 
+  win.destroy();
   console.log('Popup previews written to:', outDir);
   app.quit();
 });

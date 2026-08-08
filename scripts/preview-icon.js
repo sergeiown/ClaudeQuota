@@ -3,12 +3,9 @@
 
 'use strict';
 
-// Generates PNG previews of the tray icon in every state worth eyeballing
-// before it's buried inside Electron's Tray/nativeImage machinery. Run:
-//
+// Generates PNG previews of the tray icon in every state worth eyeballing.
+// Run with:
 //   node scripts/preview-icon.js
-//
-// Writes PNGs into the OS temp dir and prints the folder path.
 
 const fs = require('fs');
 const os = require('os');
@@ -18,8 +15,6 @@ const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../
 
 const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claudequota-icon-preview-'));
 
-// Covers all three thresholds (<=50 good, 51-80 warn, >=81 danger) plus the
-// single-digit and fully-full edge cases that have broken past renders.
 const cases = [
   { name: '00-00', numerator: 0, denominator: 0 },
   { name: '05-08', numerator: 5, denominator: 8 },

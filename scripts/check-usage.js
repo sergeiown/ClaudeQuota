@@ -3,14 +3,10 @@
 
 'use strict';
 
-// Live smoke test against the real, undocumented Anthropic usage endpoint,
-// using whatever `claude` CLI credentials are on this machine. Run with:
-//
+// Live smoke test against the real Anthropic usage endpoint. Run with:
 //   node scripts/check-usage.js
-//
-// Does not refresh the token - if it's expired, re-run `claude` (or
-// scripts/check-refresh.js) first. Never logs the access/refresh tokens
-// themselves, only the usage response.
+// Does not refresh an expired token - re-run `claude` first if needed.
+// Never log the access/refresh tokens themselves, only status/usage data.
 
 const { getActiveTokens } = require('../src/usage/credentials');
 const { fetchUsage } = require('../src/usage/client');

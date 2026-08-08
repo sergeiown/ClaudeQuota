@@ -3,12 +3,7 @@
 
 'use strict';
 
-/**
- * Thrown by credentials.js when ~/.claude/.credentials.json cannot be
- * read or does not have the shape the app relies on.
- *
- * code: 'MISSING_FILE' | 'MALFORMED' | 'MISSING_REFRESH_TOKEN' | 'REFRESH_TOKEN_EXPIRED'
- */
+// code: 'MISSING_FILE' | 'MALFORMED' | 'MISSING_REFRESH_TOKEN' | 'REFRESH_TOKEN_EXPIRED'
 class CredentialsError extends Error {
   constructor(code, message) {
     super(message || code);
@@ -17,12 +12,7 @@ class CredentialsError extends Error {
   }
 }
 
-/**
- * Thrown by oauth.js when refreshing the access token fails.
- *
- * code: 'INVALID_GRANT' | 'NETWORK' | 'UNKNOWN'
- * status: HTTP status code, when the failure came from an HTTP response
- */
+// code: 'INVALID_GRANT' | 'NETWORK' | 'UNKNOWN'
 class RefreshError extends Error {
   constructor(code, message, status) {
     super(message || code);
@@ -32,9 +22,6 @@ class RefreshError extends Error {
   }
 }
 
-/**
- * Thrown by client.js when the usage API responds with a non-2xx status.
- */
 class UsageHttpError extends Error {
   constructor(status, bodyText) {
     super(`usage API responded with ${status}`);

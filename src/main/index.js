@@ -13,11 +13,6 @@ const { getDisplayStyle, setDisplayStyle } = require('./settings');
 const { showAboutDialog } = require('./about');
 const { initAutoUpdater, quitOrInstall } = require('./updater');
 
-// Tray-only app: no BrowserWindow is ever created, so Electron's default
-// "quit when all windows are closed" never triggers (there's no window to
-// close in the first place). The only place app.quit()/quitAndInstall() is
-// called is the "Quit" menu item (via updater.quitOrInstall), wired up below.
-
 let poller = null;
 
 process.on('uncaughtException', (err) => log.error('uncaughtException', err));
@@ -26,9 +21,6 @@ process.on('unhandledRejection', (err) => log.error('unhandledRejection', err));
 const gotLock = app.requestSingleInstanceLock();
 
 if (!gotLock) {
-  // Another instance (e.g. one started via autostart, another via a
-  // manual double-click) already owns the tray icon - don't create a
-  // second one.
   app.quit();
 } else {
   app.on('second-instance', () => {
@@ -64,8 +56,7 @@ function bootstrap() {
       tray.showSnapshot(snapshot);
     },
     onStatus: (status, detail) => {
-      // Never log tokens themselves - only status codes/messages/bodies,
-      // which is all `detail` ever contains (see poller.js).
+      // Never log tokens themselves - only status codes/messages/bodies.
       log.warn('usage poller status', status, detail || '');
       tray.showStatus(status);
     },

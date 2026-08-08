@@ -10,20 +10,10 @@ const { isExpiringSoon, isRefreshTokenExpired } = require('./tokens');
 const { CredentialsError, RefreshError, UsageHttpError } = require('./errors');
 const { POLL_MIN_INTERVAL_MS, TOKEN_REFRESH_SKEW_MS } = require('../main/constants');
 
-// How long to wait before re-checking when there is nothing useful to do
-// yet (no credentials file, refresh token expired) - short enough that the
-// app notices a fresh `claude login` reasonably quickly, long enough to
-// not busy-loop.
 const CREDENTIALS_RECHECK_MS = 60_000;
 
-// Backoff schedule for token-refresh network failures, independent of the
-// 180s usage-endpoint cooldown (that cooldown only applies once we again
-// have a usable access token).
 const NETWORK_BACKOFF_MS = [15_000, 30_000, 60_000, 120_000, 300_000];
 
-// Number of consecutive failed usage fetches before we tell the caller the
-// data should be considered stale/erroring, rather than just quietly
-// keeping the last known-good snapshot.
 const STALE_AFTER_FAILURES = 2;
 
 const STATUS = {
@@ -34,11 +24,6 @@ const STATUS = {
   RATE_LIMITED: 'rate-limited',
 };
 
-/**
- * @param {object} callbacks
- * @param {(snapshot: object) => void} callbacks.onSnapshot called on every successful usage fetch
- * @param {(status: string, detail?: object) => void} callbacks.onStatus called on any non-happy-path state
- */
 function createUsagePoller({ onSnapshot, onStatus }) {
   let timer = null;
   let stopped = true;
@@ -82,9 +67,6 @@ function createUsagePoller({ onSnapshot, onStatus }) {
     }
 
     if (tokens.refreshToken === knownBadRefreshToken) {
-      // Already confirmed invalid by the server this session - don't hammer
-      // the token endpoint with a refresh token we know will be rejected.
-      // Only a newer file/cache entry (different refresh token) gets us out.
       onStatus(STATUS.AUTH_ERROR);
       schedule(CREDENTIALS_RECHECK_MS);
       return;
@@ -116,8 +98,6 @@ function createUsagePoller({ onSnapshot, onStatus }) {
           schedule(delay);
           return;
         }
-        // Unknown refresh failure shape - treat like auth error, but don't
-        // permanently blacklist the refresh token since we're not sure.
         onStatus(STATUS.AUTH_ERROR, { message: err.message });
         schedule(CREDENTIALS_RECHECK_MS);
         return;
@@ -144,9 +124,6 @@ function createUsagePoller({ onSnapshot, onStatus }) {
       onSnapshot(snapshot);
     } catch (err) {
       if (!(err instanceof UsageHttpError)) {
-        // Network-level failure (TypeError: fetch failed, etc.) - treat as
-        // transient offline rather than re-throwing, which would cause an
-        // unhandled rejection and stop the scheduler permanently.
         consecutiveUsageFailures += 1;
         if (consecutiveUsageFailures >= STALE_AFTER_FAILURES) {
           onStatus(STATUS.OFFLINE, { message: err.message, lastSuccessfulUsageFetchAt });
@@ -199,11 +176,7 @@ function createUsagePoller({ onSnapshot, onStatus }) {
     schedule(Math.min(nextUsagePollAt, nextTokenRefreshAt) - Date.now());
   }
 
-  /**
-   * If the usage-endpoint cooldown has already elapsed, run a check right
-   * now instead of waiting for the next scheduled tick (e.g. when the user
-   * opens the tray menu). Never bypasses the 180s floor itself.
-   */
+  // Never bypasses the 180s floor - only skips ahead if it has already elapsed.
   function requestImmediateCheck() {
     if (stopped) return;
     tick();
