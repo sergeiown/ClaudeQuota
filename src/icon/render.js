@@ -14,12 +14,11 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
-// Same traffic-light meaning for both bars: comfortable, getting close,
-// at/near the limit. Thresholds deliberately match nothing in the API
-// itself - just a readable "getting close" / "basically full" split.
+// Same traffic-light meaning for both bars/rings: comfortable, getting
+// close, at/near the limit. 0-50 good, 51-80 warn, 81-100 danger.
 function fillColorFor(percent, palette) {
-  if (percent >= 90) return palette.fillDanger;
-  if (percent >= 70) return palette.fillWarn;
+  if (percent >= 81) return palette.fillDanger;
+  if (percent >= 51) return palette.fillWarn;
   return palette.fillGood;
 }
 

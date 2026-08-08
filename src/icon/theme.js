@@ -41,13 +41,15 @@ const LIGHT = {
   trackSevenDay: 'rgba(195, 165, 220, 0.3)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
-  // Vivid and bright by design (bright green / gold-amber / flame red) -
-  // muted "safe" tones read as dull and the amber in particular was nearly
-  // invisible. Kept dark/saturated enough to still clear the pale track's
-  // luminance above.
-  fillGood: '#22c55e',
-  fillWarn: '#f59e0b',
-  fillDanger: '#ff3b30',
+  // Pushed more vivid/saturated again after feedback that the previous
+  // trio still read as pastel. Amber is the one that fights this the most -
+  // a bright yellow is inherently high-luminance (the eye weighs green ~5x
+  // more than blue), so leaning it toward orange rather than pure yellow
+  // keeps it looking vivid while still sitting clearly below the pale
+  // track's luminance instead of washing out against it.
+  fillGood: '#00c853',
+  fillWarn: '#ff8f00',
+  fillDanger: '#ff3d00',
 };
 
 const DARK = {
@@ -59,9 +61,9 @@ const DARK = {
   divider: '#f0f0f0',
   trackFiveHour: 'rgba(100, 165, 255, 0.35)',
   trackSevenDay: 'rgba(200, 155, 255, 0.35)',
-  fillGood: '#4ade80',
-  fillWarn: '#fbbf24',
-  fillDanger: '#ff5a4e',
+  fillGood: '#00e676',
+  fillWarn: '#ffab00',
+  fillDanger: '#ff6e40',
 };
 
 /**
