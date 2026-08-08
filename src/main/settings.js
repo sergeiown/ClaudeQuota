@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 
-const DISPLAY_STYLES = ['bars', 'circles'];
+const DISPLAY_STYLES = ['bars', 'columns'];
 const DEFAULT_DISPLAY_STYLE = 'bars';
 
 function settingsPath() {
@@ -23,7 +23,7 @@ function readSettings() {
 }
 
 /**
- * @returns {'bars'|'circles'}
+ * @returns {'bars'|'columns'}
  */
 function getDisplayStyle() {
   const style = readSettings().displayStyle;
@@ -31,7 +31,7 @@ function getDisplayStyle() {
 }
 
 /**
- * @param {'bars'|'circles'} style
+ * @param {'bars'|'columns'} style
  */
 function setDisplayStyle(style) {
   if (!DISPLAY_STYLES.includes(style)) {

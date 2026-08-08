@@ -41,15 +41,15 @@ const LIGHT = {
   trackSevenDay: 'rgba(195, 165, 220, 0.3)',
   // Fill color scales with how close to the limit it is - the same
   // traffic-light meaning for both bars, layered on top of the track tint.
-  // Pushed more vivid/saturated again after feedback that the previous
-  // trio still read as pastel. Amber is the one that fights this the most -
-  // a bright yellow is inherently high-luminance (the eye weighs green ~5x
-  // more than blue), so leaning it toward orange rather than pure yellow
-  // keeps it looking vivid while still sitting clearly below the pale
-  // track's luminance instead of washing out against it.
-  fillGood: '#00c853',
-  fillWarn: '#ff8f00',
-  fillDanger: '#ff3d00',
+  // User-picked palette (pure, high-saturation primaries) after two earlier
+  // rounds still read as pastel/muddy - checked against a real Windows 11
+  // light taskbar (#F2F2F2): green and red both have very high contrast,
+  // yellow is the one that stays close to the pale track's luminance (both
+  // are light), same recurring risk as every previous amber attempt - the
+  // divider tick in drawBar/drawColumn is the safety net for that case.
+  fillGood: '#00c800',
+  fillWarn: '#ffc800',
+  fillDanger: '#e00000',
 };
 
 const DARK = {
@@ -61,9 +61,13 @@ const DARK = {
   divider: '#f0f0f0',
   trackFiveHour: 'rgba(100, 165, 255, 0.35)',
   trackSevenDay: 'rgba(200, 155, 255, 0.35)',
-  fillGood: '#00e676',
-  fillWarn: '#ffab00',
-  fillDanger: '#ff6e40',
+  // Green/yellow unchanged from light theme - both already have strong
+  // contrast against a near-black taskbar. Red alone is brightened: pure
+  // #E00000 has low luminance and reads as muddy/near-invisible against a
+  // dark background specifically.
+  fillGood: '#00c800',
+  fillWarn: '#ffc800',
+  fillDanger: '#ff3b30',
 };
 
 /**

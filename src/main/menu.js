@@ -11,7 +11,7 @@ const { Menu } = require('electron');
  * @param {object} opts
  * @param {boolean} opts.autoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
- * @param {'bars'|'circles'} opts.displayStyle
+ * @param {'bars'|'columns'} opts.displayStyle
  * @param {() => void} opts.onToggleDisplayStyle
  * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout
@@ -34,7 +34,7 @@ function buildTrayMenu({
       click: onToggleAutoLaunch,
     },
     {
-      label: `Display style: ${displayStyle === 'circles' ? 'Circles' : 'Bars'}`,
+      label: `Display style: ${displayStyle === 'columns' ? 'Vertical bars' : 'Horizontal bars'}`,
       click: onToggleDisplayStyle,
     },
     {

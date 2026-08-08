@@ -14,8 +14,8 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
-// Same traffic-light meaning for both bars/rings: comfortable, getting
-// close, at/near the limit. 0-50 good, 51-80 warn, 81-100 danger.
+// Same traffic-light meaning everywhere: comfortable, getting close,
+// at/near the limit. 0-50 good, 51-80 warn, 81-100 danger.
 function fillColorFor(percent, palette) {
   if (percent >= 81) return palette.fillDanger;
   if (percent >= 51) return palette.fillWarn;
@@ -109,63 +109,39 @@ function renderFractionIcon({ numerator, denominator, size, isDark }) {
 }
 
 /**
- * Draws one ring gauge: a full circle stroke in the track color, then a
- * clockwise progress arc from the top (12 o'clock) in the fill color for
- * this percentage. `butt` line caps are deliberate - `round` caps would
- * visually extend the arc past its true angle by half the line width at
- * each end, which exaggerates small percentages the most (the same
- * precision-over-decoration reasoning as the pixel-snapped bars, just
- * geometric here instead of pixel-grid-based since circles need
- * anti-aliasing to look right at any size).
- *
- * A short radial tick in the divider color marks the fill/track boundary -
- * same color-independent safety net as the bars, just drawn as a line
- * across the ring's width at the boundary angle instead of a rectangle.
+ * Draws one vertical fill column, filling bottom-up (0% is empty, 100% is
+ * full to the top) - same track/fill/divider logic as `drawBar`, just
+ * transposed. An earlier alternative layout here was two concentric ring
+ * gauges; real-world feedback was that anti-aliased rings at actual 16px
+ * tray size blurred into an unreadable blob (rings need anti-aliasing to
+ * look right at all, unlike these pixel-snapped rectangles). Two vertical
+ * bars side by side keep the same pixel-snapping the horizontal bars rely
+ * on for crispness, while still reading as visually distinct from the
+ * default horizontal layout.
  */
-function drawRing(ctx, cx, cy, radius, lineWidth, percent, trackColor, palette) {
-  ctx.lineCap = 'butt';
-  ctx.lineWidth = lineWidth;
+function drawColumn(ctx, x, y, width, height, percent, trackColor, palette) {
+  ctx.fillStyle = trackColor;
+  ctx.fillRect(x, y, width, height);
 
-  ctx.strokeStyle = trackColor;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.stroke();
+  const filledHeight = Math.round((height * clampPercent(percent)) / 100);
+  if (filledHeight > 0) {
+    ctx.fillStyle = fillColorFor(clampPercent(percent), palette);
+    ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
+  }
 
-  const clamped = clampPercent(percent);
-  if (clamped <= 0) return;
-
-  const startAngle = -Math.PI / 2;
-  // A sweep of exactly 2*PI (100%) renders as nothing at all in this
-  // canvas implementation - verified directly, startAngle === endAngle
-  // (mod 2*PI) is apparently treated as a zero-length path rather than a
-  // full circle. Falling a hair short of a full turn sidesteps that; the
-  // gap is far smaller than a pixel at any supported icon size.
-  const sweep = (Math.PI * 2 * clamped) / 100;
-  const endAngle = startAngle + Math.min(sweep, Math.PI * 2 - 0.001);
-
-  ctx.strokeStyle = fillColorFor(clamped, palette);
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, startAngle, endAngle);
-  ctx.stroke();
-
-  if (clamped < 100) {
-    const innerR = radius - lineWidth / 2;
-    const outerR = radius + lineWidth / 2;
-    ctx.strokeStyle = palette.divider;
-    ctx.lineWidth = Math.max(1, lineWidth / 6);
-    ctx.beginPath();
-    ctx.moveTo(cx + innerR * Math.cos(endAngle), cy + innerR * Math.sin(endAngle));
-    ctx.lineTo(cx + outerR * Math.cos(endAngle), cy + outerR * Math.sin(endAngle));
-    ctx.stroke();
+  if (filledHeight > 0 && filledHeight < height) {
+    const dividerHeight = Math.max(1, Math.round(width / 6));
+    ctx.fillStyle = palette.divider;
+    ctx.fillRect(x, y + height - filledHeight, width, dividerHeight);
   }
 }
 
 /**
- * Renders two concentric ring gauges to a PNG buffer - an alternative to
- * the fill bars, same data and color meaning, added after a request for a
- * circles-based layout. Outer (bigger) ring is the 5-hour window, inner
- * (smaller) ring the 7-day one, matching the order used everywhere else
- * (tooltip, bars). Selectable from the tray menu; see src/main/settings.js.
+ * Renders two vertical fill columns to a PNG buffer - an alternative to
+ * the horizontal fill bars, same data and color meaning, same pixel-cell
+ * math for crispness. Left column is the 5-hour window, right column the
+ * 7-day one, matching the order used everywhere else (tooltip, bars).
+ * Selectable from the tray menu; see src/main/settings.js.
  *
  * @param {object} opts
  * @param {number} opts.numerator 0-100 (5-hour utilization)
@@ -174,22 +150,25 @@ function drawRing(ctx, cx, cy, radius, lineWidth, percent, trackColor, palette) 
  * @param {boolean} opts.isDark
  * @returns {Buffer} PNG
  */
-function renderRingIcon({ numerator, denominator, size, isDark }) {
+function renderColumnsIcon({ numerator, denominator, size, isDark }) {
   const palette = getPalette(isDark);
   const canvas = createCanvas(size, size);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
+  ctx.imageSmoothingEnabled = false;
 
+  // Horizontal layout in 16 cells total: 1 margin + 6 column + 2 gap + 6
+  // column + 1 margin = 16, exactly filling the icon at any size, mirroring
+  // renderFractionIcon's vertical layout. Vertical: 1 margin top/bottom.
   const cell = size / 16;
-  const cx = size / 2;
-  const cy = size / 2;
-  const ringThickness = 3 * cell;
-  const gap = 1 * cell;
-  const outerRadius = size / 2 - 1 * cell - ringThickness / 2;
-  const innerRadius = outerRadius - ringThickness - gap;
+  const marginY = 1 * cell;
+  const colHeight = size - marginY * 2;
+  const colWidth = 6 * cell;
+  const leftColX = 1 * cell;
+  const rightColX = 9 * cell;
 
-  drawRing(ctx, cx, cy, outerRadius, ringThickness, numerator, palette.trackFiveHour, palette);
-  drawRing(ctx, cx, cy, innerRadius, ringThickness, denominator, palette.trackSevenDay, palette);
+  drawColumn(ctx, leftColX, marginY, colWidth, colHeight, numerator, palette.trackFiveHour, palette);
+  drawColumn(ctx, rightColX, marginY, colWidth, colHeight, denominator, palette.trackSevenDay, palette);
 
   return canvas.toBuffer('image/png');
 }
@@ -238,6 +217,6 @@ function renderStatusIcon({ kind, size, isDark }) {
 
 module.exports = {
   renderFractionIcon,
-  renderRingIcon,
+  renderColumnsIcon,
   renderStatusIcon,
 };

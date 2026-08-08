@@ -5,11 +5,11 @@
 
 const { Tray, nativeImage } = require('electron');
 
-const { renderFractionIcon, renderRingIcon, renderStatusIcon } = require('../icon/render');
+const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
 
 const RENDER_FN_BY_STYLE = {
   bars: renderFractionIcon,
-  circles: renderRingIcon,
+  columns: renderColumnsIcon,
 };
 const { buildTrayMenu } = require('./menu');
 
@@ -95,7 +95,7 @@ function formatCountdown(resetsAtIso) {
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
- * @param {() => 'bars'|'circles'} opts.getDisplayStyle
+ * @param {() => 'bars'|'columns'} opts.getDisplayStyle
  * @param {() => void} opts.onToggleDisplayStyle
  * @param {() => void} opts.onOpenLog
  * @param {() => void} opts.onAbout

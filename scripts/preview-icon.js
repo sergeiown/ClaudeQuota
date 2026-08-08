@@ -14,7 +14,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { renderFractionIcon, renderRingIcon, renderStatusIcon } = require('../src/icon/render');
+const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../src/icon/render');
 
 const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claudequota-icon-preview-'));
 
@@ -36,7 +36,7 @@ for (const size of [16, 32]) {
     for (const c of cases) {
       const args = { numerator: c.numerator, denominator: c.denominator, size, isDark };
       fs.writeFileSync(path.join(outDir, `bars-${size}px-${themeLabel}-${c.name}.png`), renderFractionIcon(args));
-      fs.writeFileSync(path.join(outDir, `circles-${size}px-${themeLabel}-${c.name}.png`), renderRingIcon(args));
+      fs.writeFileSync(path.join(outDir, `columns-${size}px-${themeLabel}-${c.name}.png`), renderColumnsIcon(args));
     }
   }
 
