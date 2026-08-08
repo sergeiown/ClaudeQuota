@@ -8,6 +8,9 @@
 //   electron scripts/verify-popup.js
 // Reuses one window across cases - a freshly created BrowserWindow per case
 // can fail to load a data: URL here.
+// capturePage() only captures the web page's own rendered pixels, not
+// OS-level window chrome (native shadow, DWM corner rounding) - it cannot
+// catch bugs in those, no matter how this test window is configured.
 
 const { app, BrowserWindow } = require('electron');
 const fs = require('fs');

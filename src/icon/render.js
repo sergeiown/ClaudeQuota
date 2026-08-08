@@ -140,8 +140,8 @@ function roundedRectPath(ctx, x, y, width, height, radius) {
 function castRoundedShadow(ctx, x, y, width, height, radius) {
   ctx.save();
   ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 5;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowBlur = 7;
+  ctx.shadowOffsetY = 3;
   roundedRectPath(ctx, x, y, width, height, radius);
   ctx.fillStyle = '#000';
   ctx.fill();
@@ -220,10 +220,13 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
 // image, so its label can sit right next to that one bar/column instead of
 // a shared list next to a combined image.
 
-const PREVIEW_BAR_WIDTH = 320;
-const PREVIEW_BAR_HEIGHT = 90;
-const PREVIEW_BAR_PILL_HEIGHT = 54;
-const PREVIEW_BAR_MARGIN_X = 16;
+// Margin is generous on purpose - the drop shadow needs room to fade out
+// before it hits the canvas edge, or it gets hard-clipped into a visible
+// rectangle instead of a soft halo.
+const PREVIEW_BAR_WIDTH = 340;
+const PREVIEW_BAR_HEIGHT = 120;
+const PREVIEW_BAR_PILL_HEIGHT = 72;
+const PREVIEW_BAR_MARGIN_X = 24;
 
 function renderBarPreview({ percent, variant, isDark }) {
   const palette = getPalette(isDark);
@@ -239,10 +242,10 @@ function renderBarPreview({ percent, variant, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
-const PREVIEW_COLUMN_WIDTH = 90;
-const PREVIEW_COLUMN_HEIGHT = 320;
-const PREVIEW_COLUMN_PILL_WIDTH = 54;
-const PREVIEW_COLUMN_MARGIN_Y = 16;
+const PREVIEW_COLUMN_WIDTH = 120;
+const PREVIEW_COLUMN_HEIGHT = 340;
+const PREVIEW_COLUMN_PILL_WIDTH = 72;
+const PREVIEW_COLUMN_MARGIN_Y = 24;
 
 function renderColumnPreview({ percent, variant, isDark }) {
   const palette = getPalette(isDark);

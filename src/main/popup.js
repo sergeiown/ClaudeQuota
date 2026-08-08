@@ -14,8 +14,8 @@ const RENDER_FN_BY_STYLE = {
 const TRAY_GAP = 8;
 
 const DIMENSIONS = {
-  bars: { width: 380, height: 400 },
-  columns: { width: 340, height: 540 },
+  bars: { width: 400, height: 430 },
+  columns: { width: 380, height: 540 },
 };
 
 function escapeHtml(text) {
@@ -45,11 +45,11 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     <div class="col-group">
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageOne}">
-        <div class="label vertical">${escapeHtml(lineOne)}</div>
+        <div class="label-lane"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
       </div>
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageTwo}">
-        <div class="label vertical">${escapeHtml(lineTwo)}</div>
+        <div class="label-lane"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
       </div>
     </div>`
       : `
@@ -106,7 +106,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     align-items: center;
     gap: 6px;
   }
-  .bar-img { width: 320px; height: 90px; }
+  .bar-img { width: 340px; height: 120px; }
   .bar-block .label { text-align: center; }
   .col-group {
     display: flex;
@@ -117,13 +117,21 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   .col-block {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 8px;
   }
-  .col-img { width: 90px; height: 320px; }
-  .col-block .label.vertical {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+  .col-img { width: 120px; height: 340px; }
+  .label-lane {
+    position: relative;
+    width: 22px;
+    height: 400px;
+  }
+  .label-lane .label.vertical {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    transform-origin: bottom left;
+    transform: rotate(-90deg);
     white-space: nowrap;
   }
 </style>
@@ -170,6 +178,11 @@ function createPopupController() {
       skipTaskbar: true,
       alwaysOnTop: true,
       transparent: true,
+      // The OS draws its own window shadow as a plain rectangle, which would
+      // otherwise show through the transparent corners as a square outline
+      // around our rounded CSS card - the card already paints its own
+      // shadow that actually follows its rounded shape.
+      hasShadow: false,
       webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
     });
     win.on('blur', () => win.hide());
