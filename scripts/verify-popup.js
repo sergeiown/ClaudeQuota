@@ -30,6 +30,7 @@ const CASES = [
   { name: 'columns-dark', style: 'columns', isDark: true, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
   { name: 'columns-short', style: 'columns', isDark: false, lineOne: SHORT_LINE_ONE, lineTwo: SHORT_LINE_TWO },
   { name: 'columns-mismatched', style: 'columns', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: SHORT_LINE_TWO },
+  { name: 'columns-tiny', style: 'columns', isDark: false, lineOne: '5h: 5%', lineTwo: '7d: 9%' },
 ];
 
 app.whenReady().then(async () => {

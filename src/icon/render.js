@@ -122,9 +122,7 @@ function renderColumnsIcon({ numerator, denominator, size, isDark }) {
 // Larger, anti-aliased rounded-rect renders used only by the popup - the
 // tray icon versions above stay pixel-snapped for crispness at 16px.
 
-// Fixed, not proportional to thickness - just enough to soften the corners
-// without reading as a pill.
-const SUBTLE_RADIUS = 5;
+const SUBTLE_RADIUS = 0;
 
 function roundedRectPath(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);

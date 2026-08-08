@@ -41,24 +41,26 @@ function estimateTextWidth(text) {
  * The vertical label in the "columns" style is a rotated block of text, so
  * its rendered length can need more room than the column image is tall.
  * The label's lane is always exactly PREVIEW_COLUMN_HEIGHT - matching the
- * image - so their tops and bottoms line up exactly regardless of text
- * length; a longer label instead overflows upward past that shared top
- * edge, into `overflowAbove` extra space reserved above the whole row.
- * Both columns get the same overflowAbove (the longer of the two labels),
- * so the two labels also stay level with each other.
+ * image - and the label is centered within it, so the lane's top AND
+ * bottom both line up with the image's top and bottom regardless of text
+ * length: a shorter label just leaves even space above and below itself,
+ * a longer one overflows evenly past both edges instead of stretching the
+ * lane (which would push the image down to keep only the bottoms aligned).
+ * Both columns use the same total overflow (the longer of the two
+ * labels), so the two labels also stay level with each other.
  */
-function columnsOverflowAbove(lineOne, lineTwo) {
+function columnsOverflow(lineOne, lineTwo) {
   const longest = Math.max(estimateTextWidth(lineOne), estimateTextWidth(lineTwo));
   return Math.max(0, Math.ceil(longest) + 16 - PREVIEW_COLUMN_HEIGHT);
 }
 
 function computeDimensions({ style, lineOne, lineTwo }) {
   if (style === 'columns') {
-    const overflowAbove = columnsOverflowAbove(lineOne, lineTwo);
-    const height = HEADER_RESERVED_HEIGHT + overflowAbove + PREVIEW_COLUMN_HEIGHT + BODY_PADDING;
-    return { width: COLUMNS_WIDTH, height, overflowAbove };
+    const overflow = columnsOverflow(lineOne, lineTwo);
+    const height = HEADER_RESERVED_HEIGHT + overflow + PREVIEW_COLUMN_HEIGHT + BODY_PADDING;
+    return { width: COLUMNS_WIDTH, height, overflow };
   }
-  return { width: BARS_WIDTH, height: BARS_HEIGHT, overflowAbove: null };
+  return { width: BARS_WIDTH, height: BARS_HEIGHT, overflow: null };
 }
 
 function escapeHtml(text) {
@@ -71,7 +73,8 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
-  const { overflowAbove } = computeDimensions({ style, lineOne, lineTwo });
+  const { overflow } = computeDimensions({ style, lineOne, lineTwo });
+  const marginTop = overflow ? overflow / 2 : 0;
 
   const textColor = isDark ? '#f4f4f5' : '#1a1a1a';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
@@ -86,7 +89,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   const content =
     style === 'columns'
       ? `
-    <div class="col-group" style="margin-top:${overflowAbove}px">
+    <div class="col-group" style="margin-top:${marginTop}px">
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageOne}">
         <div class="label-lane"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
@@ -173,10 +176,9 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   }
   .label-lane .label.vertical {
     position: absolute;
-    left: 0;
-    bottom: 0;
-    transform-origin: bottom left;
-    transform: rotate(-90deg);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
     white-space: nowrap;
   }
 </style>
