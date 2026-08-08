@@ -155,7 +155,7 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
   const clamped = clampPercent(percent);
   const filledWidth = Math.round((width * clamped) / 100);
   const fillColor = fillColorFor(clamped, palette);
-  const radius = height / 3;
+  const radius = height / 8;
 
   castRoundedShadow(ctx, x, y, width, height, radius);
 
@@ -188,7 +188,7 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
   const clamped = clampPercent(percent);
   const filledHeight = Math.round((height * clamped) / 100);
   const fillColor = fillColorFor(clamped, palette);
-  const radius = width / 3;
+  const radius = width / 8;
 
   castRoundedShadow(ctx, x, y, width, height, radius);
 
@@ -303,5 +303,9 @@ module.exports = {
   renderColumnsIcon,
   renderBarPreview,
   renderColumnPreview,
+  PREVIEW_BAR_WIDTH,
+  PREVIEW_BAR_HEIGHT,
+  PREVIEW_COLUMN_WIDTH,
+  PREVIEW_COLUMN_HEIGHT,
   renderStatusIcon,
 };

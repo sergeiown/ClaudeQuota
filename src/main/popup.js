@@ -4,7 +4,14 @@
 'use strict';
 
 const { BrowserWindow, screen } = require('electron');
-const { renderBarPreview, renderColumnPreview } = require('../icon/render');
+const {
+  renderBarPreview,
+  renderColumnPreview,
+  PREVIEW_BAR_WIDTH,
+  PREVIEW_BAR_HEIGHT,
+  PREVIEW_COLUMN_WIDTH,
+  PREVIEW_COLUMN_HEIGHT,
+} = require('../icon/render');
 
 const RENDER_FN_BY_STYLE = {
   bars: renderBarPreview,
@@ -13,10 +20,44 @@ const RENDER_FN_BY_STYLE = {
 
 const TRAY_GAP = 8;
 
-const DIMENSIONS = {
-  bars: { width: 400, height: 430 },
-  columns: { width: 380, height: 540 },
-};
+const BARS_WIDTH = 400;
+const BARS_HEIGHT = 430;
+const COLUMNS_WIDTH = 380;
+const LABEL_LANE_WIDTH = 22;
+
+const HEADER_RESERVED_HEIGHT = 46;
+const BODY_PADDING = 36;
+
+// Rough average glyph width for the popup's font at 14px - good enough to
+// size the window before the real text gets laid out by Chromium, not
+// meant to be pixel-exact. Errs a little large on purpose.
+const AVG_CHAR_WIDTH = 7.6;
+
+function estimateTextWidth(text) {
+  return (text || '').length * AVG_CHAR_WIDTH;
+}
+
+/**
+ * The vertical label in the "columns" style is a rotated block of text, so
+ * its rendered length (not just its line count) directly sets how tall its
+ * lane - and therefore the whole popup window - needs to be. Both columns'
+ * lanes share the longer of the two estimates, so the two labels always
+ * reach the same height as each other regardless of which one is actually
+ * longer this time - mismatched lane heights between the two columns read
+ * as "text and bars at different heights".
+ */
+function columnsLaneHeight(lineOne, lineTwo) {
+  const longest = Math.max(estimateTextWidth(lineOne), estimateTextWidth(lineTwo));
+  return Math.max(PREVIEW_COLUMN_HEIGHT, Math.ceil(longest) + 16);
+}
+
+function computeDimensions({ style, lineOne, lineTwo }) {
+  if (style === 'columns') {
+    const laneHeight = columnsLaneHeight(lineOne, lineTwo);
+    return { width: COLUMNS_WIDTH, height: HEADER_RESERVED_HEIGHT + laneHeight + BODY_PADDING, laneHeight };
+  }
+  return { width: BARS_WIDTH, height: BARS_HEIGHT, laneHeight: null };
+}
 
 function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({
@@ -28,6 +69,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
+  const { laneHeight } = computeDimensions({ style, lineOne, lineTwo });
 
   const textColor = isDark ? '#f4f4f5' : '#1a1a1a';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
@@ -45,11 +87,11 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     <div class="col-group">
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageOne}">
-        <div class="label-lane"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
+        <div class="label-lane" style="height:${laneHeight}px"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
       </div>
       <div class="col-block">
         <img class="col-img" src="data:image/png;base64,${imageTwo}">
-        <div class="label-lane"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
+        <div class="label-lane" style="height:${laneHeight}px"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
       </div>
     </div>`
       : `
@@ -106,7 +148,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     align-items: center;
     gap: 6px;
   }
-  .bar-img { width: 340px; height: 120px; }
+  .bar-img { width: ${PREVIEW_BAR_WIDTH}px; height: ${PREVIEW_BAR_HEIGHT}px; }
   .bar-block .label { text-align: center; }
   .col-group {
     display: flex;
@@ -120,11 +162,10 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     align-items: flex-end;
     gap: 8px;
   }
-  .col-img { width: 120px; height: 340px; }
+  .col-img { width: ${PREVIEW_COLUMN_WIDTH}px; height: ${PREVIEW_COLUMN_HEIGHT}px; }
   .label-lane {
     position: relative;
-    width: 22px;
-    height: 400px;
+    width: ${LABEL_LANE_WIDTH}px;
   }
   .label-lane .label.vertical {
     position: absolute;
@@ -163,7 +204,9 @@ function positionNearTray(win, trayBounds, dimensions) {
  * enlarged, live copy of the tray icon's bars/columns plus the tooltip text.
  * The window's content is a self-contained `data:` HTML document rebuilt
  * from scratch on every render, reusing render.js's own drawing functions so
- * the popup and tray icon can never visually drift apart.
+ * the popup and tray icon can never visually drift apart. Window size is
+ * recomputed on every render too, since the "columns" style's vertical
+ * labels need more or less room depending on the actual text.
  */
 function createPopupController() {
   let win = null;
@@ -189,9 +232,10 @@ function createPopupController() {
     return win;
   }
 
-  function render(args) {
+  function render(args, trayBounds) {
     const w = ensureWindow();
     w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(args))}`);
+    if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(args));
   }
 
   function toggle(args, trayBounds) {
@@ -200,14 +244,13 @@ function createPopupController() {
       w.hide();
       return;
     }
-    render(args);
-    positionNearTray(w, trayBounds, DIMENSIONS[args.style] || DIMENSIONS.bars);
+    render(args, trayBounds);
     w.show();
     w.focus();
   }
 
-  function updateIfVisible(args) {
-    if (win && !win.isDestroyed() && win.isVisible()) render(args);
+  function updateIfVisible(args, trayBounds) {
+    if (win && !win.isDestroyed() && win.isVisible()) render(args, trayBounds);
   }
 
   function hide() {
@@ -224,5 +267,5 @@ function createPopupController() {
 module.exports = {
   createPopupController,
   buildHtml,
-  DIMENSIONS,
+  computeDimensions,
 };

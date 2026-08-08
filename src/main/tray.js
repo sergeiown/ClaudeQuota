@@ -146,7 +146,7 @@ function createTrayController({
     const sevenDayText = formatUsageLine('7d', snapshot.sevenDay);
 
     tray.setToolTip(`${header}\n${fiveHourText}\n${sevenDayText}`);
-    popup.updateIfVisible(buildPopupArgs());
+    popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
   }
 
   function showStatus(kind) {
@@ -160,7 +160,7 @@ function createTrayController({
     const iconKind = STATUS_ICON_KIND[kind] || 'loading';
     tray.setImage(buildNativeImage(renderStatusIcon, { kind: iconKind, isDark: currentIsDark }));
     tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind] || kind}`);
-    popup.updateIfVisible(buildPopupArgs());
+    popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
   }
 
   function refreshTheme(newIsDark) {

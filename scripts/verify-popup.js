@@ -16,31 +16,43 @@ const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { buildHtml, DIMENSIONS } = require('../src/main/popup');
+const { buildHtml, computeDimensions } = require('../src/main/popup');
+
+const LONG_LINE_ONE = '5h: 42% - resets in 2 hours 15 minutes (16:45)';
+const LONG_LINE_TWO = '7d: 87% - expires in 18 hours 40 minutes (09:10)';
+const SHORT_LINE_ONE = '5h: 60% - resets in 1 hour (20:50)';
+const SHORT_LINE_TWO = '7d: 89% - resets in 1 day 4 hours';
 
 const CASES = [
-  { name: 'bars-light', style: 'bars', isDark: false },
-  { name: 'bars-dark', style: 'bars', isDark: true },
-  { name: 'columns-light', style: 'columns', isDark: false },
-  { name: 'columns-dark', style: 'columns', isDark: true },
+  { name: 'bars-light', style: 'bars', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
+  { name: 'bars-dark', style: 'bars', isDark: true, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
+  { name: 'columns-light', style: 'columns', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
+  { name: 'columns-dark', style: 'columns', isDark: true, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
+  { name: 'columns-short', style: 'columns', isDark: false, lineOne: SHORT_LINE_ONE, lineTwo: SHORT_LINE_TWO },
+  { name: 'columns-mismatched', style: 'columns', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: SHORT_LINE_TWO },
 ];
 
 app.whenReady().then(async () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claudequota-popup-preview-'));
-  const win = new BrowserWindow({ show: false, width: 500, height: 300 });
+  // frame: false matches the real popup window - a framed test window's
+  // title bar/borders eat into the content area, shrinking it below the
+  // size we asked for and making correctly-sized content clip.
+  const win = new BrowserWindow({ show: false, frame: false, width: 500, height: 300 });
 
   for (const c of CASES) {
-    const dimensions = DIMENSIONS[c.style] || DIMENSIONS.bars;
-    win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
-    const html = buildHtml({
+    const headerText = 'ClaudeQuota as of 14:30 on 7 August 2026';
+    const args = {
       numerator: 42,
       denominator: 87,
       style: c.style,
       isDark: c.isDark,
-      headerText: 'ClaudeQuota as of 14:30 on 7 August 2026',
-      lineOne: '5h: 42% - resets in 2 hours 15 minutes (16:45)',
-      lineTwo: '7d: 87% - expires in 18 hours 40 minutes (09:10)',
-    });
+      headerText,
+      lineOne: c.lineOne,
+      lineTwo: c.lineTwo,
+    };
+    const dimensions = computeDimensions(args);
+    win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
+    const html = buildHtml(args);
     await win.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`);
     await new Promise((r) => setTimeout(r, 200));
     const image = await win.webContents.capturePage();
