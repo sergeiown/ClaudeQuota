@@ -109,6 +109,92 @@ function renderFractionIcon({ numerator, denominator, size, isDark }) {
 }
 
 /**
+ * Draws one ring gauge: a full circle stroke in the track color, then a
+ * clockwise progress arc from the top (12 o'clock) in the fill color for
+ * this percentage. `butt` line caps are deliberate - `round` caps would
+ * visually extend the arc past its true angle by half the line width at
+ * each end, which exaggerates small percentages the most (the same
+ * precision-over-decoration reasoning as the pixel-snapped bars, just
+ * geometric here instead of pixel-grid-based since circles need
+ * anti-aliasing to look right at any size).
+ *
+ * A short radial tick in the divider color marks the fill/track boundary -
+ * same color-independent safety net as the bars, just drawn as a line
+ * across the ring's width at the boundary angle instead of a rectangle.
+ */
+function drawRing(ctx, cx, cy, radius, lineWidth, percent, trackColor, palette) {
+  ctx.lineCap = 'butt';
+  ctx.lineWidth = lineWidth;
+
+  ctx.strokeStyle = trackColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const clamped = clampPercent(percent);
+  if (clamped <= 0) return;
+
+  const startAngle = -Math.PI / 2;
+  // A sweep of exactly 2*PI (100%) renders as nothing at all in this
+  // canvas implementation - verified directly, startAngle === endAngle
+  // (mod 2*PI) is apparently treated as a zero-length path rather than a
+  // full circle. Falling a hair short of a full turn sidesteps that; the
+  // gap is far smaller than a pixel at any supported icon size.
+  const sweep = (Math.PI * 2 * clamped) / 100;
+  const endAngle = startAngle + Math.min(sweep, Math.PI * 2 - 0.001);
+
+  ctx.strokeStyle = fillColorFor(clamped, palette);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.stroke();
+
+  if (clamped < 100) {
+    const innerR = radius - lineWidth / 2;
+    const outerR = radius + lineWidth / 2;
+    ctx.strokeStyle = palette.divider;
+    ctx.lineWidth = Math.max(1, lineWidth / 6);
+    ctx.beginPath();
+    ctx.moveTo(cx + innerR * Math.cos(endAngle), cy + innerR * Math.sin(endAngle));
+    ctx.lineTo(cx + outerR * Math.cos(endAngle), cy + outerR * Math.sin(endAngle));
+    ctx.stroke();
+  }
+}
+
+/**
+ * Renders two concentric ring gauges to a PNG buffer - an alternative to
+ * the fill bars, same data and color meaning, added after a request for a
+ * circles-based layout. Outer (bigger) ring is the 5-hour window, inner
+ * (smaller) ring the 7-day one, matching the order used everywhere else
+ * (tooltip, bars). Selectable from the tray menu; see src/main/settings.js.
+ *
+ * @param {object} opts
+ * @param {number} opts.numerator 0-100 (5-hour utilization)
+ * @param {number} opts.denominator 0-100 (7-day utilization)
+ * @param {number} opts.size 16 or 32 (px, square)
+ * @param {boolean} opts.isDark
+ * @returns {Buffer} PNG
+ */
+function renderRingIcon({ numerator, denominator, size, isDark }) {
+  const palette = getPalette(isDark);
+  const canvas = createCanvas(size, size);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, size, size);
+
+  const cell = size / 16;
+  const cx = size / 2;
+  const cy = size / 2;
+  const ringThickness = 3 * cell;
+  const gap = 1 * cell;
+  const outerRadius = size / 2 - 1 * cell - ringThickness / 2;
+  const innerRadius = outerRadius - ringThickness - gap;
+
+  drawRing(ctx, cx, cy, outerRadius, ringThickness, numerator, palette.trackFiveHour, palette);
+  drawRing(ctx, cx, cy, innerRadius, ringThickness, denominator, palette.trackSevenDay, palette);
+
+  return canvas.toBuffer('image/png');
+}
+
+/**
  * Small pixel glyphs for non-happy-path states where there is no
  * meaningful percentage to show yet (or ever). Same hand-drawn approach
  * as the fraction bars - crisp filled squares, no anti-aliased text.
@@ -152,5 +238,6 @@ function renderStatusIcon({ kind, size, isDark }) {
 
 module.exports = {
   renderFractionIcon,
+  renderRingIcon,
   renderStatusIcon,
 };
