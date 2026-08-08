@@ -6,12 +6,14 @@
 const { Tray, nativeImage } = require('electron');
 
 const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
+const { buildTrayMenu } = require('./menu');
+const { formatHeader, formatUsageLine } = require('./format');
+const { createPopupController } = require('./popup');
 
 const RENDER_FN_BY_STYLE = {
   bars: renderFractionIcon,
   columns: renderColumnsIcon,
 };
-const { buildTrayMenu } = require('./menu');
 
 const STATUS_MESSAGES = {
   'missing-credentials': "Claude CLI not found. Run `claude login`.",
@@ -39,58 +41,10 @@ function buildNativeImage(renderFn, args) {
   return image;
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-function hhmm(date) {
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-}
-
-function formatHeader(fetchedAt) {
-  const d = new Date(fetchedAt || Date.now());
-  return `ClaudeQuota as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-/** Returns e.g. "resets in 2 hours 15 minutes (14:30)" or "expires in 4 minutes (14:30)". */
-function formatCountdown(resetsAtIso) {
-  if (!resetsAtIso) return 'no reset time';
-  const resetsAt = new Date(resetsAtIso);
-  const diffMs = resetsAt - Date.now();
-  if (diffMs <= 0) return 'resetting now';
-
-  const ONE_MIN = 60_000;
-  const ONE_HOUR = 3_600_000;
-  const ONE_DAY = 86_400_000;
-
-  const underOneHour = diffMs < ONE_HOUR;
-  const underOneDay = diffMs < ONE_DAY;
-
-  const timeTag = underOneDay ? ` (${hhmm(resetsAt)})` : '';
-
-  if (underOneHour) {
-    const mins = Math.max(1, Math.floor(diffMs / ONE_MIN));
-    return `expires in ${mins} minute${mins !== 1 ? 's' : ''}${timeTag}`;
-  }
-
-  const totalHours = Math.floor(diffMs / ONE_HOUR);
-  const remainingMins = Math.floor((diffMs % ONE_HOUR) / ONE_MIN);
-  const minPart = remainingMins > 0 ? ` ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}` : '';
-
-  if (underOneDay) {
-    return `resets in ${totalHours} hour${totalHours !== 1 ? 's' : ''}${minPart}${timeTag}`;
-  }
-
-  const totalDays = Math.floor(diffMs / ONE_DAY);
-  const remainingHours = totalHours - totalDays * 24;
-  const hourPart = remainingHours > 0 ? ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}` : '';
-  return `resets in ${totalDays} day${totalDays !== 1 ? 's' : ''}${hourPart}`;
-}
-
 /**
  * Owns the single Tray instance for the app's lifetime: icon bitmap,
- * tooltip, and context menu. No BrowserWindow involved anywhere.
+ * tooltip, context menu, and the click-to-open popup. No other
+ * BrowserWindow anywhere else in the app.
  *
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
@@ -101,8 +55,8 @@ function formatCountdown(resetsAtIso) {
  * @param {() => void} opts.onAbout
  * @param {() => void} opts.onQuit
  * @param {() => void} [opts.onRequestRefresh] called when the user opens
- *   the context menu, to allow an on-demand refresh (still gated by the
- *   180s cooldown inside poller.js, never bypasses it)
+ *   the context menu or the popup, to allow an on-demand refresh (still
+ *   gated by the 180s cooldown inside poller.js, never bypasses it)
  * @param {boolean} opts.isDark initial theme
  */
 function createTrayController({
@@ -122,6 +76,8 @@ function createTrayController({
 
   const tray = new Tray(buildNativeImage(renderStatusIcon, { kind: 'loading', isDark: currentIsDark }));
   tray.setToolTip('ClaudeQuota - loading...');
+
+  const popup = createPopupController();
 
   function rebuildMenu() {
     tray.setContextMenu(
@@ -152,10 +108,40 @@ function createTrayController({
   }
   rebuildMenu();
 
-  if (onRequestRefresh) {
-    tray.on('right-click', onRequestRefresh);
-    tray.on('click', onRequestRefresh);
+  /** Current state, reshaped into what popup.js needs to render itself. */
+  function buildPopupArgs() {
+    if (lastSnapshot) {
+      const numerator = lastSnapshot.fiveHour ? lastSnapshot.fiveHour.utilization : 0;
+      const denominator = lastSnapshot.sevenDay ? lastSnapshot.sevenDay.utilization : 0;
+      return {
+        numerator,
+        denominator,
+        style: getDisplayStyle(),
+        isDark: currentIsDark,
+        headerText: formatHeader(lastSnapshot.fetchedAt),
+        lineOne: formatUsageLine('5h', lastSnapshot.fiveHour),
+        lineTwo: formatUsageLine('7d', lastSnapshot.sevenDay),
+      };
+    }
+    return {
+      numerator: 0,
+      denominator: 0,
+      style: getDisplayStyle(),
+      isDark: currentIsDark,
+      headerText: 'ClaudeQuota',
+      lineOne: STATUS_MESSAGES[lastStatusKind] || 'Loading...',
+      lineTwo: '',
+    };
   }
+
+  tray.on('right-click', () => {
+    if (onRequestRefresh) onRequestRefresh();
+  });
+
+  tray.on('click', () => {
+    if (onRequestRefresh) onRequestRefresh();
+    popup.toggle(buildPopupArgs(), tray.getBounds());
+  });
 
   function showSnapshot(snapshot) {
     lastSnapshot = snapshot;
@@ -168,15 +154,11 @@ function createTrayController({
     tray.setImage(buildNativeImage(renderFn, { numerator, denominator, isDark: currentIsDark }));
 
     const header = formatHeader(snapshot.fetchedAt);
-
-    const fiveHourText = snapshot.fiveHour
-      ? `5h: ${snapshot.fiveHour.utilization}% - ${formatCountdown(snapshot.fiveHour.resetsAt)}`
-      : '5h: no data';
-    const sevenDayText = snapshot.sevenDay
-      ? `7d: ${snapshot.sevenDay.utilization}% - ${formatCountdown(snapshot.sevenDay.resetsAt)}`
-      : '7d: no data';
+    const fiveHourText = formatUsageLine('5h', snapshot.fiveHour);
+    const sevenDayText = formatUsageLine('7d', snapshot.sevenDay);
 
     tray.setToolTip(`${header}\n${fiveHourText}\n${sevenDayText}`);
+    popup.updateIfVisible(buildPopupArgs());
   }
 
   function showStatus(kind) {
@@ -184,7 +166,8 @@ function createTrayController({
 
     if ((kind === 'offline' || kind === 'rate-limited') && lastSnapshot) {
       // Keep the last known numbers on screen - only the tooltip changes.
-      // Avoids blinking the icon on every transient network hiccup.
+      // Avoids blinking the icon on every transient network hiccup. The
+      // popup (if open) is left showing the same last-known data too.
       tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind]}`);
       return;
     }
@@ -192,6 +175,7 @@ function createTrayController({
     const iconKind = STATUS_ICON_KIND[kind] || 'loading';
     tray.setImage(buildNativeImage(renderStatusIcon, { kind: iconKind, isDark: currentIsDark }));
     tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind] || kind}`);
+    popup.updateIfVisible(buildPopupArgs());
   }
 
   function refreshTheme(newIsDark) {
@@ -207,6 +191,7 @@ function createTrayController({
   }
 
   function destroy() {
+    popup.destroy();
     tray.destroy();
   }
 
