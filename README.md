@@ -6,9 +6,14 @@
 [![English](https://img.shields.io/badge/-English-blue)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
 
-A Windows tray app that shows your Claude usage limits at a glance: two fill bars in the tray icon, one for the 5-hour window and one for the 7-day window. Hovering the icon shows the exact percentages and reset times.
+A Windows tray app that shows your Claude usage limits at a glance, in either of two styles - pick whichever from the tray menu:
 
-Each bar's empty ("track") color is fixed and just identifies which bar is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green below 70%, amber from 70% up to 90%, red at 90% and above. Both bars use the same thresholds.
+- **Bars** (default): two fill bars, one for the 5-hour window and one for the 7-day window.
+- **Circles**: the same two values as concentric ring gauges - the bigger outer ring is the 5-hour window, the smaller inner one the 7-day window.
+
+Hovering the icon shows the exact percentages and reset times either way.
+
+Each bar/ring's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds.
 
 All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
 
@@ -16,9 +21,9 @@ All of these colors, plus the icon itself, follow your Windows light/dark theme 
 |---|---|---|
 | 5-hour track | ![](https://img.shields.io/badge/-%20-78A0D2) `#78A0D2` (30% opacity) | ![](https://img.shields.io/badge/-%20-64A5FF) `#64A5FF` (35% opacity) |
 | 7-day track | ![](https://img.shields.io/badge/-%20-C3A5DC) `#C3A5DC` (30% opacity) | ![](https://img.shields.io/badge/-%20-C89BFF) `#C89BFF` (35% opacity) |
-| Fill, under 70% | ![](https://img.shields.io/badge/-%20-22C55E) `#22C55E` | ![](https://img.shields.io/badge/-%20-4ADE80) `#4ADE80` |
-| Fill, 70-89% | ![](https://img.shields.io/badge/-%20-F59E0B) `#F59E0B` | ![](https://img.shields.io/badge/-%20-FBBF24) `#FBBF24` |
-| Fill, 90%+ | ![](https://img.shields.io/badge/-%20-FF3B30) `#FF3B30` | ![](https://img.shields.io/badge/-%20-FF5A4E) `#FF5A4E` |
+| Fill, 0-50% | ![](https://img.shields.io/badge/-%20-00C853) `#00C853` | ![](https://img.shields.io/badge/-%20-00E676) `#00E676` |
+| Fill, 51-80% | ![](https://img.shields.io/badge/-%20-FF8F00) `#FF8F00` | ![](https://img.shields.io/badge/-%20-FFAB00) `#FFAB00` |
+| Fill, 81-100% | ![](https://img.shields.io/badge/-%20-FF3D00) `#FF3D00` | ![](https://img.shields.io/badge/-%20-FF6E40) `#FF6E40` |
 
 ## How it works
 
@@ -39,7 +44,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 ## Tray menu
 
-Right-clicking the icon shows: start with Windows (on by default after install, toggleable), open log, about, and quit.
+Right-clicking the icon shows: start with Windows (on by default after install, toggleable), display style (switches between bars and circles, remembered across restarts), open log, about, and quit.
 
 ## Status
 
