@@ -129,7 +129,9 @@ function createTrayController({
   });
 
   tray.on('click', () => {
-    if (onRequestRefresh) onRequestRefresh();
+    // Deliberately does not call onRequestRefresh() here - the popup fully
+    // reloads its content on every update, so a refresh landing moments
+    // after opening would repaint it right after it just appeared.
     popup.toggle(buildPopupArgs(), tray.getBounds());
   });
 

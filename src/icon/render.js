@@ -19,8 +19,7 @@ function fillColorFor(percent, palette) {
   return palette.fillGood;
 }
 
-// Divider only earns its place for the warn color - track is near-invisible
-// against green/red already, so a line there would just be noise.
+// Divider only earns its place for the warn color - track is near-invisible against green/red already.
 function needsDivider(fillColor, palette) {
   return fillColor === palette.fillWarn;
 }
@@ -119,8 +118,7 @@ function renderColumnsIcon({ numerator, denominator, size, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
-// Larger, anti-aliased rounded-rect renders used only by the popup - the
-// tray icon versions above stay pixel-snapped for crispness at 16px.
+// Larger, anti-aliased rounded-rect renders used only by the popup - the tray icon above stays pixel-snapped for crispness at 16px.
 
 const SUBTLE_RADIUS = 0;
 
@@ -148,8 +146,7 @@ function castRoundedShadow(ctx, x, y, width, height, radius) {
   ctx.fillStyle = '#000';
   ctx.fill();
   ctx.restore();
-  // The shape itself was only needed to cast the shadow above/below it -
-  // clear it back out so the real track/fill colors show through cleanly.
+  // Only needed to cast the shadow - clear it so the real colors show through.
   ctx.clearRect(x, y, width, height);
 }
 
@@ -170,10 +167,7 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y, filledWidth, height);
   }
-  // Top-to-bottom gloss - a light sheen fading to a faint shade - for a
-  // sense of a rounded, lit-from-above surface rather than a flat
-  // rectangle. Strong enough to still read against a saturated fill color,
-  // not just the much paler track.
+  // Top-to-bottom gloss, strong enough to read against a saturated fill color too.
   const gloss = ctx.createLinearGradient(x, y, x, y + height);
   gloss.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
   gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
@@ -220,13 +214,9 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
   }
 }
 
-// Single-bar/column previews - each of the popup's two stats gets its own
-// image, so its label can sit right next to that one bar/column instead of
-// a shared list next to a combined image.
-
-// Margin is generous on purpose - the drop shadow needs room to fade out
-// before it hits the canvas edge, or it gets hard-clipped into a visible
-// rectangle instead of a soft halo.
+// Single-bar/column previews, one image per stat. Margin is generous so the
+// drop shadow has room to fade before the canvas edge, instead of getting
+// hard-clipped into a visible rectangle.
 const PREVIEW_BAR_WIDTH = 340;
 const PREVIEW_BAR_HEIGHT = 120;
 const PREVIEW_BAR_PILL_HEIGHT = 72;

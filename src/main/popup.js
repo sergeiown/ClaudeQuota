@@ -29,27 +29,18 @@ const LABEL_LANE_WIDTH = 22;
 const HEADER_RESERVED_HEIGHT = 56;
 const BODY_PADDING = 36;
 
-// Rough average glyph width for the popup's font at 14px - good enough to
-// size the window before the real text gets laid out by Chromium, not
-// meant to be pixel-exact. Errs a little large on purpose.
+// Rough average glyph width at 14px - just for sizing the window before
+// Chromium lays out the real text, not meant to be pixel-exact.
 const AVG_CHAR_WIDTH = 7.6;
 
 function estimateTextWidth(text) {
   return (text || '').length * AVG_CHAR_WIDTH;
 }
 
-/**
- * The vertical label in the "columns" style is a rotated block of text, so
- * its rendered length can need more room than the column image is tall.
- * The label's lane is always exactly PREVIEW_COLUMN_HEIGHT - matching the
- * image - and the label is centered within it, so the lane's top AND
- * bottom both line up with the image's top and bottom regardless of text
- * length: a shorter label just leaves even space above and below itself,
- * a longer one overflows evenly past both edges instead of stretching the
- * lane (which would push the image down to keep only the bottoms aligned).
- * Both columns use the same total overflow (the longer of the two
- * labels), so the two labels also stay level with each other.
- */
+// The rotated vertical label can need more room than PREVIEW_COLUMN_HEIGHT -
+// it's centered in a lane of that fixed height so a longer label overflows
+// evenly past both edges instead of pushing the image down. Both columns
+// share the longer label's overflow so they stay level with each other.
 function columnsOverflow(lineOne, lineTwo) {
   const longest = Math.max(estimateTextWidth(lineOne), estimateTextWidth(lineTwo));
   return Math.max(0, Math.ceil(longest) + 16 - PREVIEW_COLUMN_HEIGHT);
@@ -77,8 +68,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   const { overflow } = computeDimensions({ style, lineOne, lineTwo });
   const marginTop = overflow ? overflow / 2 : 0;
 
-  // Softer than pure black/white - a title still reads as a heading
-  // without looking like harsh solid ink.
+  // Softer than pure black/white.
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
@@ -208,21 +198,13 @@ function positionNearTray(win, trayBounds, dimensions) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
-/**
- * Owns the single popup window opened by left-clicking the tray icon - an
- * enlarged, live copy of the tray icon's bars/columns plus the tooltip text.
- * The window's content is a self-contained `data:` HTML document rebuilt
- * from scratch on every render, reusing render.js's own drawing functions so
- * the popup and tray icon can never visually drift apart. Window size is
- * recomputed on every render too, since the "columns" style's vertical
- * labels need more or less room depending on the actual text.
- *
- * Square corners rather than a CSS border-radius: a frameless Electron
- * window's actual pixel bounds are always a plain rectangle, so a rounded
- * card drawn inside it reads as a sticker glued onto a square window
- * rather than a genuinely rounded window - a shadow alone gives the
- * "floating card" look without that mismatch.
- */
+// Owns the single popup window opened by left-clicking the tray icon. Its
+// content is a self-contained `data:` HTML document rebuilt from scratch on
+// every render, reusing render.js's own drawing functions.
+//
+// Square corners, not a CSS border-radius: a frameless window's actual pixel
+// bounds are always a plain rectangle, so a rounded card drawn inside one
+// reads as a sticker on a square window - a shadow alone avoids that.
 function createPopupController() {
   let win = null;
 
@@ -236,10 +218,7 @@ function createPopupController() {
       skipTaskbar: true,
       alwaysOnTop: true,
       transparent: true,
-      // The OS's own window shadow is a plain rectangle - fine here since
-      // the card itself is square too, but the card's CSS shadow already
-      // does this job with more control over its softness/spread.
-      hasShadow: false,
+      hasShadow: false, // the card paints its own CSS shadow instead
       webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
     });
     win.on('blur', () => win.hide());
