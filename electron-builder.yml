@@ -1,5 +1,6 @@
 appId: net.prostopay.claudequota
 productName: ClaudeQuota
+copyright: Copyright © 2026 Serhii Myshko
 
 directories:
   output: dist
