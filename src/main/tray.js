@@ -7,7 +7,7 @@ const { Tray, nativeImage } = require('electron');
 
 const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
 const { buildTrayMenu } = require('./menu');
-const { formatHeader, formatUsageLine } = require('./format');
+const { formatHeader, formatTooltipHeader, formatUsageLine } = require('./format');
 const { createPopupController } = require('./popup');
 
 const RENDER_FN_BY_STYLE = {
@@ -141,7 +141,7 @@ function createTrayController({
 
     tray.setImage(buildNativeImage(renderFn, { numerator, denominator, isDark: currentIsDark }));
 
-    const header = formatHeader(snapshot.fetchedAt);
+    const header = formatTooltipHeader(snapshot.fetchedAt);
     const fiveHourText = formatUsageLine('5h', snapshot.fiveHour);
     const sevenDayText = formatUsageLine('7d', snapshot.sevenDay);
 

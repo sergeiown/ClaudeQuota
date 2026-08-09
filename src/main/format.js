@@ -17,6 +17,15 @@ function formatHeader(fetchedAt) {
   return `ClaudeQuota as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// Windows' tray tooltip (NOTIFYICONDATA.szTip) silently truncates past
+// ~127 characters - the full formatHeader() plus two usage lines can
+// exceed that. Kept short on purpose; formatHeader() is used for the
+// popup instead, which has no such limit.
+function formatTooltipHeader(fetchedAt) {
+  const d = new Date(fetchedAt || Date.now());
+  return `ClaudeQuota ${hhmm(d)}`;
+}
+
 function formatCountdown(resetsAtIso) {
   if (!resetsAtIso) return 'no reset time';
   const resetsAt = new Date(resetsAtIso);
@@ -34,21 +43,21 @@ function formatCountdown(resetsAtIso) {
 
   if (underOneHour) {
     const mins = Math.max(1, Math.floor(diffMs / ONE_MIN));
-    return `expires in ${mins} minute${mins !== 1 ? 's' : ''}${timeTag}`;
+    return `expires in ${mins}m${timeTag}`;
   }
 
   const totalHours = Math.floor(diffMs / ONE_HOUR);
   const remainingMins = Math.floor((diffMs % ONE_HOUR) / ONE_MIN);
-  const minPart = remainingMins > 0 ? ` ${remainingMins} minute${remainingMins !== 1 ? 's' : ''}` : '';
+  const minPart = remainingMins > 0 ? ` ${remainingMins}m` : '';
 
   if (underOneDay) {
-    return `resets in ${totalHours} hour${totalHours !== 1 ? 's' : ''}${minPart}${timeTag}`;
+    return `resets in ${totalHours}h${minPart}${timeTag}`;
   }
 
   const totalDays = Math.floor(diffMs / ONE_DAY);
   const remainingHours = totalHours - totalDays * 24;
-  const hourPart = remainingHours > 0 ? ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}` : '';
-  return `resets in ${totalDays} day${totalDays !== 1 ? 's' : ''}${hourPart}`;
+  const hourPart = remainingHours > 0 ? ` ${remainingHours}h` : '';
+  return `resets in ${totalDays}d${hourPart}`;
 }
 
 function formatUsageLine(label, window) {
@@ -57,6 +66,7 @@ function formatUsageLine(label, window) {
 
 module.exports = {
   formatHeader,
+  formatTooltipHeader,
   formatCountdown,
   formatUsageLine,
 };
