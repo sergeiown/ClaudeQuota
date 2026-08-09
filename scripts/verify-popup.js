@@ -41,13 +41,13 @@ app.whenReady().then(async () => {
   const win = new BrowserWindow({ show: false, frame: false, width: 500, height: 300 });
 
   for (const c of CASES) {
-    const headerText = 'ClaudeQuota as of 14:30 on 7 August 2026';
     const args = {
       numerator: 42,
       denominator: 87,
       style: c.style,
       isDark: c.isDark,
-      headerText,
+      headerTitle: 'ClaudeQuota',
+      headerDetail: 'as of 14:30 on 7 August 2026',
       lineOne: c.lineOne,
       lineTwo: c.lineTwo,
     };

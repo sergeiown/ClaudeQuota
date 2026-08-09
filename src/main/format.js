@@ -12,15 +12,16 @@ function hhmm(date) {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function formatHeader(fetchedAt) {
+// The popup's header is two lines: "ClaudeQuota" (a constant, styled as a
+// title) above this - just the "as of ..." detail line.
+function formatHeaderDate(fetchedAt) {
   const d = new Date(fetchedAt || Date.now());
-  return `ClaudeQuota as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return `as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 // Windows' tray tooltip (NOTIFYICONDATA.szTip) silently truncates past
-// ~127 characters - the full formatHeader() plus two usage lines can
-// exceed that. Kept short on purpose; formatHeader() is used for the
-// popup instead, which has no such limit.
+// ~127 characters - a full date/time header plus two verbose usage lines
+// can exceed that. Kept short on purpose.
 function formatTooltipHeader(fetchedAt) {
   const d = new Date(fetchedAt || Date.now());
   return `ClaudeQuota ${hhmm(d)}`;
@@ -65,7 +66,7 @@ function formatUsageLine(label, window) {
 }
 
 module.exports = {
-  formatHeader,
+  formatHeaderDate,
   formatTooltipHeader,
   formatCountdown,
   formatUsageLine,

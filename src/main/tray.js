@@ -7,7 +7,7 @@ const { Tray, nativeImage } = require('electron');
 
 const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
 const { buildTrayMenu } = require('./menu');
-const { formatHeader, formatTooltipHeader, formatUsageLine } = require('./format');
+const { formatHeaderDate, formatTooltipHeader, formatUsageLine } = require('./format');
 const { createPopupController } = require('./popup');
 
 const RENDER_FN_BY_STYLE = {
@@ -106,7 +106,8 @@ function createTrayController({
         denominator,
         style: getDisplayStyle(),
         isDark: currentIsDark,
-        headerText: formatHeader(lastSnapshot.fetchedAt),
+        headerTitle: 'ClaudeQuota',
+        headerDetail: formatHeaderDate(lastSnapshot.fetchedAt),
         lineOne: formatUsageLine('5h', lastSnapshot.fiveHour),
         lineTwo: formatUsageLine('7d', lastSnapshot.sevenDay),
       };
@@ -116,7 +117,8 @@ function createTrayController({
       denominator: 0,
       style: getDisplayStyle(),
       isDark: currentIsDark,
-      headerText: 'ClaudeQuota',
+      headerTitle: 'ClaudeQuota',
+      headerDetail: '',
       lineOne: STATUS_MESSAGES[lastStatusKind] || 'Loading...',
       lineTwo: '',
     };

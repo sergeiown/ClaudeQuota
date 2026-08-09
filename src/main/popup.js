@@ -25,7 +25,8 @@ const BARS_HEIGHT = 430;
 const COLUMNS_WIDTH = 380;
 const LABEL_LANE_WIDTH = 22;
 
-const HEADER_RESERVED_HEIGHT = 46;
+// Two lines (title + date detail) plus the gap under them.
+const HEADER_RESERVED_HEIGHT = 56;
 const BODY_PADDING = 36;
 
 // Rough average glyph width for the popup's font at 14px - good enough to
@@ -69,22 +70,25 @@ function escapeHtml(text) {
   }[c]));
 }
 
-function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne, lineTwo }) {
+function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
   const { overflow } = computeDimensions({ style, lineOne, lineTwo });
   const marginTop = overflow ? overflow / 2 : 0;
 
-  const textColor = isDark ? '#f4f4f5' : '#1a1a1a';
+  // Softer than pure black/white - a title still reads as a heading
+  // without looking like harsh solid ink.
+  const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
+  const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
   const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
   const gradient = isDark
     ? 'linear-gradient(160deg, rgba(46,46,50,0.97), rgba(24,24,27,0.96))'
     : 'linear-gradient(160deg, rgba(255,255,255,0.97), rgba(240,241,245,0.95))';
   const shadow = isDark
-    ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 10px 30px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)'
-    : '0 1px 0 rgba(255,255,255,0.6) inset, 0 10px 30px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
+    ? '0 12px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)'
+    : '0 12px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
 
   const content =
     style === 'columns'
@@ -124,23 +128,19 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
     padding: 18px;
     font-family: 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
     font-size: 14px;
-    color: ${textColor};
+    color: ${detailColor};
     background: ${gradient};
     border: 1px solid ${borderColor};
-    border-radius: 14px;
     box-shadow: ${shadow};
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     -webkit-user-select: none;
   }
-  .header {
-    font-size: 14px;
-    font-weight: 700;
-    color: ${textColor};
-    margin-bottom: 12px;
-    text-align: center;
-  }
+  .header { margin-bottom: 14px; text-align: center; }
+  .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
+  .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
   .label { color: ${mutedColor}; font-size: 14px; line-height: 1.4; }
   .bar-stack {
     display: flex;
@@ -184,7 +184,10 @@ function buildHtml({ numerator, denominator, style, isDark, headerText, lineOne,
 </style>
 </head>
 <body>
-  <div class="header">${escapeHtml(headerText)}</div>
+  <div class="header">
+    <div class="header-title">${escapeHtml(headerTitle)}</div>
+    ${headerDetail ? `<div class="header-detail">${escapeHtml(headerDetail)}</div>` : ''}
+  </div>
   ${content}
 </body>
 </html>`;
@@ -213,6 +216,12 @@ function positionNearTray(win, trayBounds, dimensions) {
  * the popup and tray icon can never visually drift apart. Window size is
  * recomputed on every render too, since the "columns" style's vertical
  * labels need more or less room depending on the actual text.
+ *
+ * Square corners rather than a CSS border-radius: a frameless Electron
+ * window's actual pixel bounds are always a plain rectangle, so a rounded
+ * card drawn inside it reads as a sticker glued onto a square window
+ * rather than a genuinely rounded window - a shadow alone gives the
+ * "floating card" look without that mismatch.
  */
 function createPopupController() {
   let win = null;
@@ -227,10 +236,9 @@ function createPopupController() {
       skipTaskbar: true,
       alwaysOnTop: true,
       transparent: true,
-      // The OS draws its own window shadow as a plain rectangle, which would
-      // otherwise show through the transparent corners as a square outline
-      // around our rounded CSS card - the card already paints its own
-      // shadow that actually follows its rounded shape.
+      // The OS's own window shadow is a plain rectangle - fine here since
+      // the card itself is square too, but the card's CSS shadow already
+      // does this job with more control over its softness/spread.
       hasShadow: false,
       webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
     });

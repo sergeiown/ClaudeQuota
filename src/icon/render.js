@@ -171,11 +171,13 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
     ctx.fillRect(x, y, filledWidth, height);
   }
   // Top-to-bottom gloss - a light sheen fading to a faint shade - for a
-  // sense of a rounded, lit-from-above surface rather than a flat rectangle.
+  // sense of a rounded, lit-from-above surface rather than a flat
+  // rectangle. Strong enough to still read against a saturated fill color,
+  // not just the much paler track.
   const gloss = ctx.createLinearGradient(x, y, x, y + height);
-  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
   gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
+  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
   ctx.fillStyle = gloss;
   ctx.fillRect(x, y, width, height);
   ctx.restore();
@@ -205,9 +207,9 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
   }
   // Left-to-right gloss, matching the vertical pill's rounded cross-section.
   const gloss = ctx.createLinearGradient(x, y, x + width, y);
-  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
   gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
+  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
   ctx.fillStyle = gloss;
   ctx.fillRect(x, y, width, height);
   ctx.restore();
