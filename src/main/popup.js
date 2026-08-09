@@ -205,9 +205,15 @@ function positionNearTray(win, trayBounds, dimensions) {
 // Square corners, not a CSS border-radius: a frameless window's actual pixel
 // bounds are always a plain rectangle, so a rounded card drawn inside one
 // reads as a sticker on a square window - a shadow alone avoids that.
+const OFFSCREEN_POS = -32000;
+
 function createPopupController() {
   let win = null;
+  let isOpen = false;
 
+  // Closing uses opacity+position, not hide() - an actually-hidden page
+  // throttles requestAnimationFrame, which broke waitForPaint() below on
+  // every open after the first.
   function ensureWindow() {
     if (win && !win.isDestroyed()) return win;
     win = new BrowserWindow({
@@ -218,48 +224,57 @@ function createPopupController() {
       skipTaskbar: true,
       alwaysOnTop: true,
       transparent: true,
+      opacity: 0,
       hasShadow: false, // the card paints its own CSS shadow instead
       webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
     });
-    win.on('blur', () => win.hide());
+    win.on('blur', () => closePopup());
     return win;
   }
 
-  // ready-to-show only fires once per window, hence the fallback timeout.
   function waitForPaint(w) {
-    return new Promise((resolve) => {
-      const timer = setTimeout(resolve, 80);
-      w.once('ready-to-show', () => {
-        clearTimeout(timer);
-        resolve();
-      });
-    });
+    return w.webContents.executeJavaScript(
+      'new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))'
+    );
   }
 
   async function render(args, trayBounds) {
     const w = ensureWindow();
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(args));
     await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(args))}`);
+    await waitForPaint(w);
+  }
+
+  function closePopup() {
+    if (!win || win.isDestroyed()) return;
+    isOpen = false;
+    win.setOpacity(0);
+    win.setPosition(OFFSCREEN_POS, OFFSCREEN_POS);
+  }
+
+  async function openPopup(args, trayBounds) {
+    await render(args, trayBounds);
+    const w = ensureWindow();
+    if (!w.isVisible()) w.show();
+    w.setOpacity(1);
+    w.focus();
+    isOpen = true;
   }
 
   async function toggle(args, trayBounds) {
-    const w = ensureWindow();
-    if (w.isVisible()) {
-      w.hide();
+    if (isOpen) {
+      closePopup();
       return;
     }
-    await render(args, trayBounds);
-    await waitForPaint(w);
-    w.show();
-    w.focus();
+    await openPopup(args, trayBounds);
   }
 
   async function updateIfVisible(args, trayBounds) {
-    if (win && !win.isDestroyed() && win.isVisible()) await render(args, trayBounds);
+    if (isOpen) await render(args, trayBounds);
   }
 
   function hide() {
-    if (win && !win.isDestroyed()) win.hide();
+    closePopup();
   }
 
   function destroy() {
