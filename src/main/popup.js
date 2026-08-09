@@ -225,25 +225,26 @@ function createPopupController() {
     return win;
   }
 
-  function render(args, trayBounds) {
+  // Awaits load before show() - otherwise it flashes blank then content.
+  async function render(args, trayBounds) {
     const w = ensureWindow();
-    w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(args))}`);
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(args));
+    await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(args))}`);
   }
 
-  function toggle(args, trayBounds) {
+  async function toggle(args, trayBounds) {
     const w = ensureWindow();
     if (w.isVisible()) {
       w.hide();
       return;
     }
-    render(args, trayBounds);
+    await render(args, trayBounds);
     w.show();
     w.focus();
   }
 
-  function updateIfVisible(args, trayBounds) {
-    if (win && !win.isDestroyed() && win.isVisible()) render(args, trayBounds);
+  async function updateIfVisible(args, trayBounds) {
+    if (win && !win.isDestroyed() && win.isVisible()) await render(args, trayBounds);
   }
 
   function hide() {
