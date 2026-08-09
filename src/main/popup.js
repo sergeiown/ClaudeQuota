@@ -225,7 +225,17 @@ function createPopupController() {
     return win;
   }
 
-  // Awaits load before show() - otherwise it flashes blank then content.
+  // ready-to-show only fires once per window, hence the fallback timeout.
+  function waitForPaint(w) {
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, 80);
+      w.once('ready-to-show', () => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
+  }
+
   async function render(args, trayBounds) {
     const w = ensureWindow();
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(args));
@@ -239,6 +249,7 @@ function createPopupController() {
       return;
     }
     await render(args, trayBounds);
+    await waitForPaint(w);
     w.show();
     w.focus();
   }
