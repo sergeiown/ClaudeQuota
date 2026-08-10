@@ -31,13 +31,28 @@ function setDisplayStyle(style) {
   if (!DISPLAY_STYLES.includes(style)) {
     throw new Error(`unknown display style: ${style}`);
   }
-  const settings = { ...readSettings(), displayStyle: style };
+  writeSettings({ displayStyle: style });
+}
+
+function writeSettings(patch) {
+  const settings = { ...readSettings(), ...patch };
   fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
   fs.writeFileSync(settingsPath(), JSON.stringify(settings));
+}
+
+function getNotificationsEnabled() {
+  const value = readSettings().notificationsEnabled;
+  return typeof value === 'boolean' ? value : true;
+}
+
+function setNotificationsEnabled(enabled) {
+  writeSettings({ notificationsEnabled: enabled });
 }
 
 module.exports = {
   DISPLAY_STYLES,
   getDisplayStyle,
   setDisplayStyle,
+  getNotificationsEnabled,
+  setNotificationsEnabled,
 };

@@ -9,6 +9,7 @@ const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../
 const { buildTrayMenu } = require('./menu');
 const { formatHeaderDate, formatTooltipHeader, formatUsageLine } = require('./format');
 const { createPopupController } = require('./popup');
+const { createThresholdNotifier } = require('./notifier');
 
 const RENDER_FN_BY_STYLE = {
   bars: renderFractionIcon,
@@ -43,6 +44,8 @@ function buildNativeImage(renderFn, args) {
  * @param {object} opts
  * @param {() => boolean} opts.getAutoLaunchEnabled
  * @param {() => void} opts.onToggleAutoLaunch
+ * @param {() => boolean} opts.getNotificationsEnabled
+ * @param {() => void} opts.onToggleNotifications
  * @param {() => 'bars'|'columns'} opts.getDisplayStyle
  * @param {() => void} opts.onToggleDisplayStyle
  * @param {() => void} opts.onOpenLog
@@ -54,6 +57,8 @@ function buildNativeImage(renderFn, args) {
 function createTrayController({
   getAutoLaunchEnabled,
   onToggleAutoLaunch,
+  getNotificationsEnabled,
+  onToggleNotifications,
   getDisplayStyle,
   onToggleDisplayStyle,
   onOpenLog,
@@ -70,6 +75,11 @@ function createTrayController({
   tray.setToolTip('ClaudeQuota - loading...');
 
   const popup = createPopupController();
+  const notifier = createThresholdNotifier({
+    onClick: () => popup.toggle(buildPopupArgs(), tray.getBounds()),
+    getIsDark: () => currentIsDark,
+    isEnabled: getNotificationsEnabled,
+  });
 
   function rebuildMenu() {
     tray.setContextMenu(
@@ -77,6 +87,11 @@ function createTrayController({
         autoLaunchEnabled: getAutoLaunchEnabled(),
         onToggleAutoLaunch: () => {
           onToggleAutoLaunch();
+          rebuildMenu();
+        },
+        notificationsEnabled: getNotificationsEnabled(),
+        onToggleNotifications: () => {
+          onToggleNotifications();
           rebuildMenu();
         },
         displayStyle: getDisplayStyle(),
@@ -151,6 +166,7 @@ function createTrayController({
 
     tray.setToolTip(`${header}\n${fiveHourText}\n${sevenDayText}`);
     popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
+    notifier.check(snapshot);
   }
 
   function showStatus(kind) {

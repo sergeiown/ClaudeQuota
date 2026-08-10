@@ -41,6 +41,19 @@ function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
     ctx.fillStyle = palette.divider;
     ctx.fillRect(x + filledWidth, y, dividerWidth, height);
   }
+
+  drawOutline(ctx, x, y, width, height, palette.outline);
+}
+
+// Fills at near-empty percentages are otherwise almost indistinguishable
+// from the taskbar itself against a very dark or very light theme - a thin
+// outline keeps the bar's shape visible regardless of fill level or background.
+function drawOutline(ctx, x, y, width, height, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, 1);
+  ctx.fillRect(x, y + height - 1, width, 1);
+  ctx.fillRect(x, y, 1, height);
+  ctx.fillRect(x + width - 1, y, 1, height);
 }
 
 /**
@@ -88,6 +101,8 @@ function drawColumn(ctx, x, y, width, height, percent, trackColor, palette) {
     ctx.fillStyle = palette.divider;
     ctx.fillRect(x, y + height - filledHeight, width, dividerHeight);
   }
+
+  drawOutline(ctx, x, y, width, height, palette.outline);
 }
 
 /**

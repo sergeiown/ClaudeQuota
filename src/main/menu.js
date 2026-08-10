@@ -8,6 +8,8 @@ const { Menu } = require('electron');
 function buildTrayMenu({
   autoLaunchEnabled,
   onToggleAutoLaunch,
+  notificationsEnabled,
+  onToggleNotifications,
   displayStyle,
   onToggleDisplayStyle,
   onOpenLog,
@@ -20,6 +22,12 @@ function buildTrayMenu({
       type: 'checkbox',
       checked: autoLaunchEnabled,
       click: onToggleAutoLaunch,
+    },
+    {
+      label: 'Show notifications',
+      type: 'checkbox',
+      checked: notificationsEnabled,
+      click: onToggleNotifications,
     },
     {
       label: `Display style: ${displayStyle === 'columns' ? 'Vertical bars' : 'Horizontal bars'}`,

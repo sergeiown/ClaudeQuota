@@ -9,11 +9,13 @@ const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
 const { isAutoLaunchEnabled, setAutoLaunchEnabled, enableAutoLaunchOnFirstRun } = require('./autostart');
-const { getDisplayStyle, setDisplayStyle } = require('./settings');
+const { getDisplayStyle, setDisplayStyle, getNotificationsEnabled, setNotificationsEnabled } = require('./settings');
 const { showAboutDialog } = require('./about');
 const { initAutoUpdater, quitOrInstall } = require('./updater');
 
 let poller = null;
+
+app.setAppUserModelId('net.prostopay.claudequota');
 
 process.on('uncaughtException', (err) => log.error('uncaughtException', err));
 process.on('unhandledRejection', (err) => log.error('unhandledRejection', err));
@@ -39,6 +41,8 @@ function bootstrap() {
     isDark: nativeTheme.shouldUseDarkColors,
     getAutoLaunchEnabled: isAutoLaunchEnabled,
     onToggleAutoLaunch: () => setAutoLaunchEnabled(!isAutoLaunchEnabled()),
+    getNotificationsEnabled,
+    onToggleNotifications: () => setNotificationsEnabled(!getNotificationsEnabled()),
     getDisplayStyle,
     onToggleDisplayStyle: () => setDisplayStyle(getDisplayStyle() === 'bars' ? 'columns' : 'bars'),
     onOpenLog: () => shell.openPath(log.transports.file.getFile().path),
