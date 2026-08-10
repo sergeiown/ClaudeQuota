@@ -8,9 +8,10 @@ const fs = require('fs');
 const { app, Notification, nativeImage } = require('electron');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const { renderBarPreview } = require('../icon/render');
+const { formatCountdown } = require('./format');
 
 const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon-source.png');
-const THRESHOLDS = [51, 81, 99];
+const THRESHOLDS = [51, 81, 99, 100];
 const VARIANT_BY_KEY = { fiveHour: 'five-hour', sevenDay: 'seven-day' };
 
 let appIconImage = null;
@@ -42,18 +43,19 @@ async function buildNotificationIcon(variant, utilization, isDark) {
   return canvas.toBuffer('image/png');
 }
 
-function messageFor(windowLabel, threshold, utilization) {
+function messageFor(windowLabel, threshold, utilization, resetsAt) {
+  if (threshold >= 100) return `${windowLabel} limit fully used - ${formatCountdown(resetsAt)}.`;
   if (threshold >= 99) return `${windowLabel} usage is almost maxed out (${utilization}%).`;
   if (threshold >= 81) return `${windowLabel} usage is getting close to the limit (${utilization}%).`;
   return `${windowLabel} usage just passed the halfway point (${utilization}%).`;
 }
 
-async function notify(windowLabel, key, threshold, utilization, isDark, onClick) {
+async function notify(windowLabel, key, threshold, usageWindow, isDark, onClick) {
   if (!Notification.isSupported()) return;
-  const iconBuffer = await buildNotificationIcon(VARIANT_BY_KEY[key], utilization, isDark);
+  const iconBuffer = await buildNotificationIcon(VARIANT_BY_KEY[key], usageWindow.utilization, isDark);
   const notification = new Notification({
     title: 'ClaudeQuota',
-    body: messageFor(windowLabel, threshold, utilization),
+    body: messageFor(windowLabel, threshold, usageWindow.utilization, usageWindow.resetsAt),
     icon: nativeImage.createFromBuffer(iconBuffer),
   });
   if (onClick) notification.on('click', onClick);
@@ -62,11 +64,12 @@ async function notify(windowLabel, key, threshold, utilization, isDark, onClick)
 
 /**
  * Fires a one-time notification per window (5-hour, 7-day) the first time
- * its utilization crosses 51/81/99%. On the very first snapshot seen for a
- * window this session, thresholds already met are marked notified without
- * actually firing - otherwise every app start at, say, 85% usage would fire
- * both the 51% and 81% notifications immediately. A window's own resetsAt
- * changing means it rolled over to a new cycle, so its notified set clears.
+ * its utilization crosses 51/81/99/100%. On the very first snapshot seen
+ * for a window this session, thresholds already met are marked notified
+ * without actually firing - otherwise every app start at, say, 85% usage
+ * would fire both the 51% and 81% notifications immediately. A window's
+ * own resetsAt changing means it rolled over to a new cycle, so its
+ * notified set clears.
  */
 function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
   const state = {
@@ -93,7 +96,7 @@ function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
       if (usageWindow.utilization >= threshold && !entry.notified.has(threshold)) {
         entry.notified.add(threshold);
         if (!isEnabled || isEnabled()) {
-          notify(label, key, threshold, usageWindow.utilization, getIsDark ? getIsDark() : true, onClick);
+          notify(label, key, threshold, usageWindow, getIsDark ? getIsDark() : true, onClick);
         }
       }
     }
