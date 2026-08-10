@@ -112,7 +112,7 @@
   <g class="box">
     <rect x="1400" y="330" width="200" height="72" rx="6" />
     <text x="1500" y="361" text-anchor="middle">Notification</text>
-    <text x="1500" y="381" text-anchor="middle">first time past 51/81/99%</text>
+    <text x="1500" y="381" text-anchor="middle">first time past 51/81/99/100%</text>
   </g>
 
   <path class="arrow" marker-end="url(#arrow)" d="M880,127 L890,330" />

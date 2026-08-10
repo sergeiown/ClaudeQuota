@@ -17,7 +17,7 @@ A Windows tray app that shows your Claude usage limits at a glance, in either of
 
 Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds, and a thin outline keeps each bar visible even near empty.
 
-You'll also get a Windows notification the first time a window's usage passes 51%, 81%, and 99% - each one shows the app icon plus a small preview of that bar, and clicking it opens the popup. Nothing fires retroactively: usage already past a threshold when the app starts doesn't trigger a notification for it.
+You'll also get a Windows notification the first time a window's usage passes 51%, 81%, 99%, and 100% - the last one also says when that window resets. Each one shows the app icon plus a small preview of that bar, and clicking it opens the popup. Nothing fires retroactively: usage already past a threshold when the app starts doesn't trigger a notification for it.
 
 All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
 
