@@ -6,16 +6,18 @@
 [![English](https://img.shields.io/badge/-English-blue)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
 
-A Windows tray app that shows your Claude usage limits at a glance, in either of two styles - pick whichever from the tray menu:
+A Windows tray app that shows your Claude usage limits at a glance, in either of two styles:
 
 - **Horizontal bars** (default): two fill bars, one for the 5-hour window and one for the 7-day window.
 - **Vertical bars**: the same two values as vertical columns side by side, left for the 5-hour window, right for the 7-day one.
 
 - **Hover** the icon to see the exact percentages and reset times in the tooltip.
 - **Left-click** the icon to open a small popup with an enlarged, more detailed view of the same bars/columns, matching whichever display style is currently selected.
-- **Right-click** the icon for the tray menu (see below).
+- **Right-click** the icon for the tray menu: start with Windows (on by default after install, toggleable), show notifications (on by default, toggleable), display style (switches between horizontal and vertical bars, remembered across restarts), open log, about, and quit.
 
-Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds.
+Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds, and a thin outline keeps each bar visible even near empty.
+
+You'll also get a Windows notification the first time a window's usage passes 51%, 81%, and 99% - each one shows the app icon plus a small preview of that bar, and clicking it opens the popup. Nothing fires retroactively: usage already past a threshold when the app starts doesn't trigger a notification for it.
 
 All of these colors, plus the icon itself, follow your Windows light/dark theme and redraw immediately if you switch it - no restart needed.
 
@@ -43,14 +45,6 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 - Windows 10/11.
 - Claude Code CLI installed and logged in (`claude login`).
-
-## Tray menu
-
-Right-clicking the icon shows: start with Windows (on by default after install, toggleable), display style (switches between horizontal and vertical bars, remembered across restarts), open log, about, and quit.
-
-## Status
-
-Under active development.
 
 ## License
 
