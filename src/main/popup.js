@@ -68,7 +68,6 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   const { overflow } = computeDimensions({ style, lineOne, lineTwo });
   const marginTop = overflow ? overflow / 2 : 0;
 
-  // Softer than pure black/white.
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
@@ -198,22 +197,17 @@ function positionNearTray(win, trayBounds, dimensions) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
-// Owns the single popup window opened by left-clicking the tray icon. Its
-// content is a self-contained `data:` HTML document rebuilt from scratch on
-// every render, reusing render.js's own drawing functions.
-//
 // Square corners, not a CSS border-radius: a frameless window's actual pixel
 // bounds are always a plain rectangle, so a rounded card drawn inside one
 // reads as a sticker on a square window - a shadow alone avoids that.
-const OFFSCREEN_POS = -32000;
-
 function createPopupController() {
   let win = null;
   let isOpen = false;
 
-  // Closing uses opacity+position, not hide() - an actually-hidden page
-  // throttles requestAnimationFrame, which broke waitForPaint() below on
-  // every open after the first.
+  // Closing uses opacity + click-through, not hide() or an off-screen
+  // position - both throttle requestAnimationFrame (hide() directly, an
+  // off-screen position via Windows' occlusion detection once combined
+  // with setAlwaysOnTop() on reopen), breaking waitForPaint() below.
   function ensureWindow() {
     if (win && !win.isDestroyed()) return win;
     win = new BrowserWindow({
@@ -249,12 +243,17 @@ function createPopupController() {
     if (!win || win.isDestroyed()) return;
     isOpen = false;
     win.setOpacity(0);
-    win.setPosition(OFFSCREEN_POS, OFFSCREEN_POS);
+    win.setIgnoreMouseEvents(true);
   }
 
   async function openPopup(args, trayBounds) {
     await render(args, trayBounds);
     const w = ensureWindow();
+    // Re-asserted on every open - other apps' own always-on-top windows
+    // could otherwise still end up above a topmost flag that was only
+    // ever set once, back when the window was first created.
+    w.setAlwaysOnTop(true);
+    w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
     w.setOpacity(1);
     w.focus();
