@@ -19,11 +19,6 @@ function fillColorFor(percent, palette) {
   return palette.fillGood;
 }
 
-// Divider only earns its place for the warn color - track is near-invisible against green/red already.
-function needsDivider(fillColor, palette) {
-  return fillColor === palette.fillWarn;
-}
-
 function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
   ctx.fillStyle = trackColor;
   ctx.fillRect(x, y, width, height);
@@ -34,12 +29,6 @@ function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
   if (filledWidth > 0) {
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y, filledWidth, height);
-  }
-
-  if (filledWidth > 0 && filledWidth < width && needsDivider(fillColor, palette)) {
-    const dividerWidth = Math.max(1, Math.round(height / 6));
-    ctx.fillStyle = palette.divider;
-    ctx.fillRect(x + filledWidth, y, dividerWidth, height);
   }
 
   drawOutline(ctx, x, y, width, height, palette.outline);
@@ -94,12 +83,6 @@ function drawColumn(ctx, x, y, width, height, percent, trackColor, palette) {
   if (filledHeight > 0) {
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
-  }
-
-  if (filledHeight > 0 && filledHeight < height && needsDivider(fillColor, palette)) {
-    const dividerHeight = Math.max(1, Math.round(width / 6));
-    ctx.fillStyle = palette.divider;
-    ctx.fillRect(x, y + height - filledHeight, width, dividerHeight);
   }
 
   drawOutline(ctx, x, y, width, height, palette.outline);
@@ -190,11 +173,6 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
   ctx.fillStyle = gloss;
   ctx.fillRect(x, y, width, height);
   ctx.restore();
-
-  if (filledWidth > 0 && filledWidth < width && needsDivider(fillColor, palette)) {
-    ctx.fillStyle = palette.divider;
-    ctx.fillRect(x + filledWidth - 1, y, 2, height);
-  }
 }
 
 function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palette) {
@@ -222,11 +200,6 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
   ctx.fillStyle = gloss;
   ctx.fillRect(x, y, width, height);
   ctx.restore();
-
-  if (filledHeight > 0 && filledHeight < height && needsDivider(fillColor, palette)) {
-    ctx.fillStyle = palette.divider;
-    ctx.fillRect(x, y + height - filledHeight - 1, width, 2);
-  }
 }
 
 // Single-bar/column previews, one image per stat. Margin is generous so the
