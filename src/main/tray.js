@@ -3,7 +3,7 @@
 
 'use strict';
 
-const { Tray, nativeImage } = require('electron');
+const { Tray, nativeImage, screen } = require('electron');
 
 const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
 const { buildTrayMenu } = require('./menu');
@@ -32,11 +32,23 @@ const STATUS_ICON_KIND = {
   'auth-error': 'auth-error',
 };
 
+// Windows scales the tray icon up from whatever we give it (16px at 100%,
+// 20px at 125%, 24px at 150%...) rather than picking a matching multi-DPI
+// representation like macOS does (electron/electron#33044) - rendering
+// fresh at the real current size avoids that upscaling blur entirely.
+function getTraySize() {
+  return Math.round(16 * screen.getPrimaryDisplay().scaleFactor);
+}
+
 function buildNativeImage(renderFn, args) {
-  const png16 = renderFn({ ...args, size: 16 });
+  const size = getTraySize();
+  const png = renderFn({ ...args, size });
+  const image = nativeImage.createFromBuffer(png);
+  // Windows' own "customize notification icons" list shows these at a
+  // fixed larger size regardless of tray DPI - a bigger representation
+  // keeps that view sharp too.
   const png32 = renderFn({ ...args, size: 32 });
-  const image = nativeImage.createFromBuffer(png16);
-  image.addRepresentation({ width: 32, height: 32, buffer: png32, scaleFactor: 2.0 });
+  image.addRepresentation({ width: 32, height: 32, buffer: png32, scaleFactor: 32 / size });
   return image;
 }
 
@@ -183,9 +195,7 @@ function createTrayController({
     popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
   }
 
-  function refreshTheme(newIsDark) {
-    if (newIsDark === currentIsDark) return;
-    currentIsDark = newIsDark;
+  function redrawIcon() {
     if (lastSnapshot) {
       showSnapshot(lastSnapshot);
     } else if (lastStatusKind) {
@@ -194,6 +204,20 @@ function createTrayController({
       tray.setImage(buildNativeImage(renderStatusIcon, { kind: 'loading', isDark: currentIsDark }));
     }
   }
+
+  function refreshTheme(newIsDark) {
+    if (newIsDark === currentIsDark) return;
+    currentIsDark = newIsDark;
+    redrawIcon();
+  }
+
+  let lastTraySize = getTraySize();
+  screen.on('display-metrics-changed', () => {
+    const size = getTraySize();
+    if (size === lastTraySize) return;
+    lastTraySize = size;
+    redrawIcon();
+  });
 
   function destroy() {
     popup.destroy();
