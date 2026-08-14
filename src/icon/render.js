@@ -148,6 +148,32 @@ function castRoundedShadow(ctx, x, y, width, height, radius) {
   ctx.clearRect(x, y, width, height);
 }
 
+// The fill colors are saturated and bright, so the same white/black overlay
+// alpha reads much fainter on them than on the pale, near-white track -
+// boosted separately here so both halves look equally glossy.
+const TRACK_GLOSS = { white: 0.4, black: 0.25 };
+const FILL_GLOSS = { white: 0.55, black: 0.35 };
+
+function drawVerticalGloss(ctx, x, y, width, height, { white, black }) {
+  if (width <= 0) return;
+  const gloss = ctx.createLinearGradient(x, y, x, y + height);
+  gloss.addColorStop(0, `rgba(255, 255, 255, ${white})`);
+  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+  gloss.addColorStop(1, `rgba(0, 0, 0, ${black})`);
+  ctx.fillStyle = gloss;
+  ctx.fillRect(x, y, width, height);
+}
+
+function drawHorizontalGloss(ctx, x, y, width, height, { white, black }) {
+  if (height <= 0) return;
+  const gloss = ctx.createLinearGradient(x, y, x + width, y);
+  gloss.addColorStop(0, `rgba(255, 255, 255, ${white})`);
+  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+  gloss.addColorStop(1, `rgba(0, 0, 0, ${black})`);
+  ctx.fillStyle = gloss;
+  ctx.fillRect(x, y, width, height);
+}
+
 function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) {
   const clamped = clampPercent(percent);
   const filledWidth = Math.round((width * clamped) / 100);
@@ -165,13 +191,9 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y, filledWidth, height);
   }
-  // Top-to-bottom gloss, strong enough to read against a saturated fill color too.
-  const gloss = ctx.createLinearGradient(x, y, x, y + height);
-  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-  ctx.fillStyle = gloss;
-  ctx.fillRect(x, y, width, height);
+  // Top-to-bottom gloss, one gradient per half so each is tuned to its own color.
+  drawVerticalGloss(ctx, x, y, filledWidth, height, FILL_GLOSS);
+  drawVerticalGloss(ctx, x + filledWidth, y, width - filledWidth, height, TRACK_GLOSS);
   ctx.restore();
 }
 
@@ -192,13 +214,9 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
   }
-  // Left-to-right gloss, matching the vertical pill's rounded cross-section.
-  const gloss = ctx.createLinearGradient(x, y, x + width, y);
-  gloss.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-  gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-  gloss.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-  ctx.fillStyle = gloss;
-  ctx.fillRect(x, y, width, height);
+  // Left-to-right gloss, one gradient per half so each is tuned to its own color.
+  drawHorizontalGloss(ctx, x, y, width, height - filledHeight, TRACK_GLOSS);
+  drawHorizontalGloss(ctx, x, y + height - filledHeight, width, filledHeight, FILL_GLOSS);
   ctx.restore();
 }
 
