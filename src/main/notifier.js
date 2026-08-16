@@ -3,45 +3,12 @@
 
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
-const { app, Notification, nativeImage } = require('electron');
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const { Notification, nativeImage } = require('electron');
 const { renderBarPreview } = require('../icon/render');
 const { formatCountdown } = require('./format');
 
-const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon-source.png');
 const THRESHOLDS = [51, 81, 99, 100];
 const VARIANT_BY_KEY = { fiveHour: 'five-hour', sevenDay: 'seven-day' };
-
-let appIconImage = null;
-async function getAppIconImage() {
-  if (!appIconImage) appIconImage = await loadImage(fs.readFileSync(ICON_PATH));
-  return appIconImage;
-}
-
-// Combines the static app icon with a live pill for the window that
-// crossed the threshold, since the generic Notification API only exposes
-// one icon slot.
-async function buildNotificationIcon(variant, utilization, isDark) {
-  const appIcon = await getAppIconImage();
-  const pillBuffer = renderBarPreview({ percent: utilization, variant, isDark });
-  const pill = await loadImage(pillBuffer);
-
-  const width = 256;
-  const height = 96;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-
-  const iconSize = 80;
-  ctx.drawImage(appIcon, 4, (height - iconSize) / 2, iconSize, iconSize);
-
-  const pillWidth = width - iconSize - 20;
-  const pillHeight = pillWidth * (pill.height / pill.width);
-  ctx.drawImage(pill, iconSize + 16, (height - pillHeight) / 2, pillWidth, pillHeight);
-
-  return canvas.toBuffer('image/png');
-}
 
 function messageFor(windowLabel, threshold, utilization, resetsAt) {
   if (threshold >= 100) return `${windowLabel} limit fully used - ${formatCountdown(resetsAt)}.`;
@@ -50,9 +17,9 @@ function messageFor(windowLabel, threshold, utilization, resetsAt) {
   return `${windowLabel} usage just passed the halfway point (${utilization}%).`;
 }
 
-async function notify(windowLabel, key, threshold, usageWindow, isDark, onClick) {
+function notify(windowLabel, key, threshold, usageWindow, isDark, onClick) {
   if (!Notification.isSupported()) return;
-  const iconBuffer = await buildNotificationIcon(VARIANT_BY_KEY[key], usageWindow.utilization, isDark);
+  const iconBuffer = renderBarPreview({ percent: usageWindow.utilization, variant: VARIANT_BY_KEY[key], isDark });
   const notification = new Notification({
     title: 'ClaudeQuota',
     body: messageFor(windowLabel, threshold, usageWindow.utilization, usageWindow.resetsAt),
@@ -67,9 +34,7 @@ async function notify(windowLabel, key, threshold, usageWindow, isDark, onClick)
  * its utilization crosses 51/81/99/100%. On the very first snapshot seen
  * for a window this session, thresholds already met are marked notified
  * without actually firing - otherwise every app start at, say, 85% usage
- * would fire both the 51% and 81% notifications immediately. A window's
- * own resetsAt changing means it rolled over to a new cycle, so its
- * notified set clears.
+ * would fire both the 51% and 81% notifications immediately.
  */
 function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
   const state = {
@@ -83,13 +48,19 @@ function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
   function checkWindow(label, key, usageWindow) {
     if (!usageWindow) return;
     const entry = state[key];
+    const isFirstSnapshot = entry.resetsAt === null;
+    const previousResetsAt = entry.resetsAt;
+    entry.resetsAt = usageWindow.resetsAt;
 
-    if (entry.resetsAt !== usageWindow.resetsAt) {
-      const isFirstSnapshot = entry.resetsAt === null;
-      entry.resetsAt = usageWindow.resetsAt;
-      entry.notified = isFirstSnapshot
-        ? new Set(THRESHOLDS.filter((t) => usageWindow.utilization >= t))
-        : new Set();
+    if (isFirstSnapshot) {
+      entry.notified = new Set(THRESHOLDS.filter((t) => usageWindow.utilization >= t));
+    } else if (previousResetsAt !== usageWindow.resetsAt && new Date(previousResetsAt).getTime() <= Date.now()) {
+      // Only a genuine rollover - the previous resetsAt actually elapsing -
+      // clears what's notified. The API can return a resetsAt that drifts
+      // slightly between polls of the same still-active window; treating
+      // every such drift as a rollover re-armed (and re-fired) every
+      // threshold on practically every poll.
+      entry.notified = new Set();
     }
 
     for (const threshold of THRESHOLDS) {
