@@ -261,6 +261,31 @@ function renderColumnPreview({ percent, variant, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
+// Square and self-contained, unlike the previews above: Windows crops a
+// non-square notification icon to a center square, and there's no popup
+// card underneath to give the track's low-alpha tint something to sit on -
+// against the notification's own dark chrome it would just vanish. A solid
+// backdrop matching the popup card's color, filling the whole square, fixes
+// both at once.
+const NOTIFICATION_ICON_SIZE = 256;
+const NOTIFICATION_BAR_WIDTH = 192;
+const NOTIFICATION_BAR_HEIGHT = 88;
+
+function renderNotificationIcon({ percent, variant, isDark }) {
+  const palette = getPalette(isDark);
+  const trackColor = variant === 'seven-day' ? palette.trackSevenDay : palette.trackFiveHour;
+  const canvas = createCanvas(NOTIFICATION_ICON_SIZE, NOTIFICATION_ICON_SIZE);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = palette.surface;
+  ctx.fillRect(0, 0, NOTIFICATION_ICON_SIZE, NOTIFICATION_ICON_SIZE);
+
+  const x = (NOTIFICATION_ICON_SIZE - NOTIFICATION_BAR_WIDTH) / 2;
+  const y = (NOTIFICATION_ICON_SIZE - NOTIFICATION_BAR_HEIGHT) / 2;
+  drawRoundedBar(ctx, x, y, NOTIFICATION_BAR_WIDTH, NOTIFICATION_BAR_HEIGHT, percent, trackColor, palette);
+
+  return canvas.toBuffer('image/png');
+}
+
 const STATUS_PATTERNS = {
   'missing-credentials': ['111', '001', '011', '000', '010'],
   'auth-error': ['010', '010', '010', '000', '010'],
@@ -302,6 +327,7 @@ module.exports = {
   renderFractionIcon,
   renderColumnsIcon,
   renderBarPreview,
+  renderNotificationIcon,
   renderColumnPreview,
   PREVIEW_BAR_WIDTH,
   PREVIEW_BAR_HEIGHT,

@@ -11,6 +11,9 @@ const LIGHT = {
   separator: 'rgba(26, 26, 26, 0.6)',
   errorForeground: '#b3261e',
   outline: 'rgba(143, 143, 143, 0.6)',
+  // Approximates the popup card's own background - the track colors are a
+  // low-alpha tint meant to sit on top of it, not stand alone.
+  surface: '#f5f6f8',
   trackFiveHour: 'rgba(120, 160, 210, 0.12)',
   trackSevenDay: 'rgba(195, 165, 220, 0.12)',
   fillGood: '#00c800',
@@ -23,6 +26,7 @@ const DARK = {
   separator: 'rgba(240, 240, 240, 0.6)',
   errorForeground: '#ff8a80',
   outline: 'rgba(168, 168, 168, 0.6)',
+  surface: '#242428',
   trackFiveHour: 'rgba(100, 165, 255, 0.18)',
   trackSevenDay: 'rgba(200, 155, 255, 0.18)',
   fillGood: '#00c800',

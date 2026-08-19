@@ -4,7 +4,7 @@
 'use strict';
 
 const { Notification, nativeImage } = require('electron');
-const { renderBarPreview } = require('../icon/render');
+const { renderNotificationIcon } = require('../icon/render');
 const { formatCountdown } = require('./format');
 
 const THRESHOLDS = [51, 81, 99, 100];
@@ -19,7 +19,7 @@ function messageFor(windowLabel, threshold, utilization, resetsAt) {
 
 function notify(windowLabel, key, threshold, usageWindow, isDark, onClick) {
   if (!Notification.isSupported()) return;
-  const iconBuffer = renderBarPreview({ percent: usageWindow.utilization, variant: VARIANT_BY_KEY[key], isDark });
+  const iconBuffer = renderNotificationIcon({ percent: usageWindow.utilization, variant: VARIANT_BY_KEY[key], isDark });
   const notification = new Notification({
     title: 'ClaudeQuota',
     body: messageFor(windowLabel, threshold, usageWindow.utilization, usageWindow.resetsAt),
