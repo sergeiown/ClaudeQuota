@@ -9,6 +9,7 @@ files:
   - src/**/*
   - package.json
   - build/icon-source.png
+  - assets/**/*
 
 win:
   target: nsis

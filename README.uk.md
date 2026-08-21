@@ -49,3 +49,5 @@
 ## Ліцензія
 
 [MIT](LICENSE).
+
+Використовує шрифт [Fredoka](https://fonts.google.com/specimen/Fredoka) (SIL Open Font License, див. `assets/fonts/OFL.txt`).

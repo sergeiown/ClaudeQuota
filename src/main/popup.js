@@ -3,6 +3,8 @@
 
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { BrowserWindow, screen } = require('electron');
 const {
   renderBarPreview,
@@ -17,6 +19,13 @@ const RENDER_FN_BY_STYLE = {
   bars: renderBarPreview,
   columns: renderColumnPreview,
 };
+
+// Loaded once and inlined as a data: URI in every popup render - the popup
+// is a data: URL document, so it can't load a font from a regular file
+// path the way a normal page would.
+const OVERLAY_FONT_BASE64 = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'assets', 'fonts', 'Fredoka-SemiBold.woff2')
+).toString('base64');
 
 const TRAY_GAP = 8;
 
@@ -127,6 +136,11 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     justify-content: center;
     -webkit-user-select: none;
   }
+  @font-face {
+    font-family: 'Fredoka';
+    font-weight: 600;
+    src: url(data:font/woff2;base64,${OVERLAY_FONT_BASE64}) format('woff2');
+  }
   .header { margin-bottom: 14px; text-align: center; }
   .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
   .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
@@ -145,23 +159,26 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     justify-content: center;
     pointer-events: none;
     -webkit-user-select: none;
-    font-family: 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
-    font-weight: 700;
+    font-family: 'Fredoka', 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: rgba(255, 255, 255, 0.92);
-    /* A soft dark halo all around (not just underneath) so the text stays
-       legible over the pale track half too, not only the saturated fill. */
+    /* Low fill opacity so the bar's own color shows through the letters -
+       a thin dark halo all around (not just underneath) keeps the shapes
+       readable as an engraved outline over both the fill and the pale
+       track half, and a slim top highlight adds the raised, glassy look. */
+    color: rgba(255, 255, 255, 0.32);
     text-shadow:
-      -1.5px 0 2px rgba(0, 0, 0, 0.55),
-      1.5px 0 2px rgba(0, 0, 0, 0.55),
-      0 -1.5px 2px rgba(0, 0, 0, 0.55),
-      0 1.5px 2px rgba(0, 0, 0, 0.55),
-      0 2px 5px rgba(0, 0, 0, 0.35);
+      -1.5px 0 2px rgba(0, 0, 0, 0.65),
+      1.5px 0 2px rgba(0, 0, 0, 0.65),
+      0 -1.5px 2px rgba(0, 0, 0, 0.65),
+      0 1.5px 2px rgba(0, 0, 0, 0.65),
+      0 1px 0 rgba(255, 255, 255, 0.35),
+      0 2px 5px rgba(0, 0, 0, 0.3);
   }
   .percent-overlay.bars-overlay { font-size: 30px; letter-spacing: 0.4px; }
   .percent-overlay.columns-overlay { flex-direction: column; font-size: 17px; line-height: 1.15; gap: 1px; }
   .detail { margin-top: 8px; text-align: center; }
-  .detail-reset { font-size: 13.5px; font-weight: 600; color: ${mutedColor}; }
+  .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
   .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
 </style>

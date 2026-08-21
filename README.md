@@ -49,3 +49,5 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 ## License
 
 [MIT](LICENSE).
+
+Bundles the [Fredoka](https://fonts.google.com/specimen/Fredoka) font (SIL Open Font License, see `assets/fonts/OFL.txt`).
