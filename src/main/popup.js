@@ -163,17 +163,15 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     /* Low fill opacity so the bar's own color shows through the letters -
-       a thin dark halo all around (not just underneath) keeps the shapes
-       readable as an engraved outline over both the fill and the pale
-       track half, and a slim top highlight adds the raised, glassy look. */
-    color: rgba(255, 255, 255, 0.32);
+       a blurred halo would cover a bold glyph's whole stroke, not just its
+       edge, so a real thin stroke outlines the shape instead and leaves
+       the interior actually see-through. A slim top highlight plus a soft
+       drop shadow add the raised, glassy look without darkening the fill. */
+    color: rgba(255, 255, 255, 0.4);
+    -webkit-text-stroke: 1px rgba(0, 0, 0, 0.55);
     text-shadow:
-      -1.5px 0 2px rgba(0, 0, 0, 0.65),
-      1.5px 0 2px rgba(0, 0, 0, 0.65),
-      0 -1.5px 2px rgba(0, 0, 0, 0.65),
-      0 1.5px 2px rgba(0, 0, 0, 0.65),
       0 1px 0 rgba(255, 255, 255, 0.35),
-      0 2px 5px rgba(0, 0, 0, 0.3);
+      0 2px 4px rgba(0, 0, 0, 0.3);
   }
   .percent-overlay.bars-overlay { font-size: 30px; letter-spacing: 0.4px; }
   .percent-overlay.columns-overlay { flex-direction: column; font-size: 17px; line-height: 1.15; gap: 1px; }
