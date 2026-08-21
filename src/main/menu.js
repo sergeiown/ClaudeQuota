@@ -30,7 +30,7 @@ function buildTrayMenu({
       click: onToggleNotifications,
     },
     {
-      label: `Display style: ${displayStyle === 'columns' ? 'Vertical bars' : 'Horizontal bars'}`,
+      label: `Style: ${displayStyle === 'columns' ? 'Columns' : 'Bars'}`,
       click: onToggleDisplayStyle,
     },
     {
