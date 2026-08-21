@@ -7,7 +7,7 @@ const { Tray, nativeImage, screen } = require('electron');
 
 const { renderFractionIcon, renderColumnsIcon, renderStatusIcon } = require('../icon/render');
 const { buildTrayMenu } = require('./menu');
-const { formatHeaderDate, formatTooltipHeader, formatUsageLine } = require('./format');
+const { formatHeaderDate, formatTooltipHeader, formatUsageLine, formatCountdown } = require('./format');
 const { createPopupController } = require('./popup');
 const { createThresholdNotifier } = require('./notifier');
 
@@ -124,6 +124,10 @@ function createTrayController({
   }
   rebuildMenu();
 
+  function resetPhrase(usageWindow) {
+    return usageWindow ? formatCountdown(usageWindow.resetsAt) : 'no data';
+  }
+
   function buildPopupArgs() {
     if (lastSnapshot) {
       const numerator = lastSnapshot.fiveHour ? lastSnapshot.fiveHour.utilization : 0;
@@ -135,8 +139,9 @@ function createTrayController({
         isDark: currentIsDark,
         headerTitle: 'ClaudeQuota',
         headerDetail: formatHeaderDate(lastSnapshot.fetchedAt),
-        lineOne: formatUsageLine('5h', lastSnapshot.fiveHour),
-        lineTwo: formatUsageLine('7d', lastSnapshot.sevenDay),
+        lineOne: resetPhrase(lastSnapshot.fiveHour),
+        lineTwo: resetPhrase(lastSnapshot.sevenDay),
+        hasData: true,
       };
     }
     return {
@@ -148,6 +153,7 @@ function createTrayController({
       headerDetail: '',
       lineOne: STATUS_MESSAGES[lastStatusKind] || 'Loading...',
       lineTwo: '',
+      hasData: false,
     };
   }
 

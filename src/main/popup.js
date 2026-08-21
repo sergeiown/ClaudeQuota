@@ -21,38 +21,20 @@ const RENDER_FN_BY_STYLE = {
 const TRAY_GAP = 8;
 
 const BARS_WIDTH = 400;
-const BARS_HEIGHT = 430;
+const BARS_HEIGHT = 520;
 const COLUMNS_WIDTH = 380;
-const LABEL_LANE_WIDTH = 22;
+const COLUMNS_HEIGHT = 540;
+const COLUMN_BLOCK_WIDTH = 160;
 
-// Two lines (title + date detail) plus the gap under them.
-const HEADER_RESERVED_HEIGHT = 56;
-const BODY_PADDING = 36;
-
-// Rough average glyph width at 14px - just for sizing the window before
-// Chromium lays out the real text, not meant to be pixel-exact.
-const AVG_CHAR_WIDTH = 7.6;
-
-function estimateTextWidth(text) {
-  return (text || '').length * AVG_CHAR_WIDTH;
-}
-
-// The rotated vertical label can need more room than PREVIEW_COLUMN_HEIGHT -
-// it's centered in a lane of that fixed height so a longer label overflows
-// evenly past both edges instead of pushing the image down. Both columns
-// share the longer label's overflow so they stay level with each other.
-function columnsOverflow(lineOne, lineTwo) {
-  const longest = Math.max(estimateTextWidth(lineOne), estimateTextWidth(lineTwo));
-  return Math.max(0, Math.ceil(longest) + 16 - PREVIEW_COLUMN_HEIGHT);
-}
-
-function computeDimensions({ style, lineOne, lineTwo }) {
+// Fixed per style - the detail text under each bar comes from a small,
+// known set of app-authored strings, not arbitrary user input, so its
+// height doesn't need to be measured/estimated like the old rotated
+// column label did.
+function computeDimensions({ style }) {
   if (style === 'columns') {
-    const overflow = columnsOverflow(lineOne, lineTwo);
-    const height = HEADER_RESERVED_HEIGHT + overflow + PREVIEW_COLUMN_HEIGHT + BODY_PADDING;
-    return { width: COLUMNS_WIDTH, height, overflow };
+    return { width: COLUMNS_WIDTH, height: COLUMNS_HEIGHT };
   }
-  return { width: BARS_WIDTH, height: BARS_HEIGHT, overflow: null };
+  return { width: BARS_WIDTH, height: BARS_HEIGHT };
 }
 
 function escapeHtml(text) {
@@ -61,16 +43,36 @@ function escapeHtml(text) {
   }[c]));
 }
 
-function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo }) {
+const FIVE_HOUR_LABEL = '5-hour window';
+const SEVEN_DAY_LABEL = '7-day window';
+const FIVE_HOUR_NOTE = 'A rolling window that starts with your first message in a session.';
+const SEVEN_DAY_NOTE = 'A shared cap across claude.ai, the IDE and Claude Code, resetting weekly.';
+const FOOTER_NOTE = 'Actual usage varies with conversation length, the model used and enabled features.';
+
+function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, note }) {
+  return `
+      <div class="block">
+        <div class="img-wrap">
+          <img class="${imgClass}" src="data:image/png;base64,${image}">
+          <div class="percent-overlay ${overlayClass}">${escapeHtml(percentText)}</div>
+        </div>
+        <div class="detail">
+          <div class="detail-reset">${escapeHtml(resetLine)}</div>
+          ${note ? `<div class="detail-note">${escapeHtml(note)}</div>` : ''}
+        </div>
+      </div>`;
+}
+
+function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
-  const { overflow } = computeDimensions({ style, lineOne, lineTwo });
-  const marginTop = overflow ? overflow / 2 : 0;
+  const isColumns = style === 'columns';
 
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
+  const noteColor = isDark ? 'rgba(244,244,245,0.5)' : 'rgba(26,26,26,0.5)';
   const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
   const gradient = isDark
     ? 'linear-gradient(160deg, rgba(46,46,50,0.97), rgba(24,24,27,0.96))'
@@ -79,30 +81,28 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     ? '0 12px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)'
     : '0 12px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
 
-  const content =
-    style === 'columns'
-      ? `
-    <div class="col-group" style="margin-top:${marginTop}px">
-      <div class="col-block">
-        <img class="col-img" src="data:image/png;base64,${imageOne}">
-        <div class="label-lane"><div class="label vertical">${escapeHtml(lineOne)}</div></div>
-      </div>
-      <div class="col-block">
-        <img class="col-img" src="data:image/png;base64,${imageTwo}">
-        <div class="label-lane"><div class="label vertical">${escapeHtml(lineTwo)}</div></div>
-      </div>
-    </div>`
-      : `
-    <div class="bar-stack">
-      <div class="bar-block">
-        <img class="bar-img" src="data:image/png;base64,${imageOne}">
-        <div class="label">${escapeHtml(lineOne)}</div>
-      </div>
-      <div class="bar-block">
-        <img class="bar-img" src="data:image/png;base64,${imageTwo}">
-        <div class="label">${escapeHtml(lineTwo)}</div>
-      </div>
-    </div>`;
+  const blockOne = buildBlock({
+    imgClass: isColumns ? 'col-img' : 'bar-img',
+    image: imageOne,
+    // No percent shown while there's no real data - a bold "0%" would read
+    // as a measured value rather than as "unknown".
+    percentText: hasData ? `5h ${numerator}%` : '5h',
+    overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
+    resetLine: hasData ? `${FIVE_HOUR_LABEL} ${lineOne}` : lineOne,
+    note: hasData ? FIVE_HOUR_NOTE : null,
+  });
+  const blockTwo = buildBlock({
+    imgClass: isColumns ? 'col-img' : 'bar-img',
+    image: imageTwo,
+    percentText: hasData ? `7d ${denominator}%` : '7d',
+    overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
+    resetLine: hasData ? `${SEVEN_DAY_LABEL} ${lineTwo}` : lineTwo,
+    note: hasData ? SEVEN_DAY_NOTE : null,
+  });
+
+  const content = isColumns
+    ? `<div class="col-group">${blockOne}${blockTwo}</div>`
+    : `<div class="bar-stack">${blockOne}${blockTwo}</div>`;
 
   return `<!doctype html>
 <html>
@@ -130,46 +130,40 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   .header { margin-bottom: 14px; text-align: center; }
   .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
   .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
-  .label { color: ${mutedColor}; font-size: 14px; line-height: 1.4; }
-  .bar-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-  .bar-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
+  .bar-stack { display: flex; flex-direction: column; gap: 20px; }
+  .col-group { display: flex; flex-direction: row; gap: 24px; align-items: flex-start; }
+  .block { display: flex; flex-direction: column; align-items: center; }
+  .col-group .block { width: ${COLUMN_BLOCK_WIDTH}px; }
+  .img-wrap { position: relative; display: inline-flex; }
   .bar-img { width: ${PREVIEW_BAR_WIDTH}px; height: ${PREVIEW_BAR_HEIGHT}px; }
-  .bar-block .label { text-align: center; }
-  .col-group {
-    display: flex;
-    flex-direction: row;
-    gap: 28px;
-    align-items: flex-start;
-  }
-  .col-block {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 8px;
-  }
   .col-img { width: ${PREVIEW_COLUMN_WIDTH}px; height: ${PREVIEW_COLUMN_HEIGHT}px; }
-  .label-lane {
-    position: relative;
-    width: ${LABEL_LANE_WIDTH}px;
-    height: ${PREVIEW_COLUMN_HEIGHT}px;
-    overflow: visible;
-  }
-  .label-lane .label.vertical {
+  .percent-overlay {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-90deg);
-    white-space: nowrap;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    -webkit-user-select: none;
+    font-family: 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.92);
+    /* A soft dark halo all around (not just underneath) so the text stays
+       legible over the pale track half too, not only the saturated fill. */
+    text-shadow:
+      -1.5px 0 2px rgba(0, 0, 0, 0.55),
+      1.5px 0 2px rgba(0, 0, 0, 0.55),
+      0 -1.5px 2px rgba(0, 0, 0, 0.55),
+      0 1.5px 2px rgba(0, 0, 0, 0.55),
+      0 2px 5px rgba(0, 0, 0, 0.35);
   }
+  .percent-overlay.bars-overlay { font-size: 30px; letter-spacing: 0.4px; }
+  .percent-overlay.columns-overlay { flex-direction: column; font-size: 17px; line-height: 1.15; gap: 1px; }
+  .detail { margin-top: 8px; text-align: center; }
+  .detail-reset { font-size: 13.5px; font-weight: 600; color: ${mutedColor}; }
+  .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
+  .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
 </style>
 </head>
 <body>
@@ -178,6 +172,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     ${headerDetail ? `<div class="header-detail">${escapeHtml(headerDetail)}</div>` : ''}
   </div>
   ${content}
+  ${hasData ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
 </body>
 </html>`;
 }

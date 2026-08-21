@@ -18,19 +18,21 @@ const os = require('os');
 const path = require('path');
 const { buildHtml, computeDimensions } = require('../src/main/popup');
 
-const LONG_LINE_ONE = '5h: 42% - resets in 2 hours 15 minutes (16:45)';
-const LONG_LINE_TWO = '7d: 87% - expires in 18 hours 40 minutes (09:10)';
-const SHORT_LINE_ONE = '5h: 60% - resets in 1 hour (20:50)';
-const SHORT_LINE_TWO = '7d: 89% - resets in 1 day 4 hours';
+const LONG_LINE_ONE = 'resets in 2h 15m (16:45)';
+const LONG_LINE_TWO = 'expires in 18h 40m (09:10)';
+const SHORT_LINE_ONE = 'resets in 1h (20:50)';
+const SHORT_LINE_TWO = 'resets in 1d 4h';
 
 const CASES = [
-  { name: 'bars-light', style: 'bars', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
-  { name: 'bars-dark', style: 'bars', isDark: true, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
-  { name: 'columns-light', style: 'columns', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
-  { name: 'columns-dark', style: 'columns', isDark: true, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO },
-  { name: 'columns-short', style: 'columns', isDark: false, lineOne: SHORT_LINE_ONE, lineTwo: SHORT_LINE_TWO },
-  { name: 'columns-mismatched', style: 'columns', isDark: false, lineOne: LONG_LINE_ONE, lineTwo: SHORT_LINE_TWO },
-  { name: 'columns-tiny', style: 'columns', isDark: false, lineOne: '5h: 5%', lineTwo: '7d: 9%' },
+  { name: 'bars-light', style: 'bars', isDark: false, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true },
+  { name: 'bars-dark', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true },
+  { name: 'columns-light', style: 'columns', isDark: false, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true },
+  { name: 'columns-dark', style: 'columns', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true },
+  { name: 'columns-short', style: 'columns', isDark: false, numerator: 60, denominator: 89, lineOne: SHORT_LINE_ONE, lineTwo: SHORT_LINE_TWO, hasData: true },
+  { name: 'bars-tiny', style: 'bars', isDark: false, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true },
+  { name: 'columns-tiny', style: 'columns', isDark: false, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true },
+  { name: 'bars-full', style: 'bars', isDark: true, numerator: 100, denominator: 100, lineOne: 'resetting now', lineTwo: 'resetting now', hasData: true },
+  { name: 'bars-nodata', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude login`.', lineTwo: '', hasData: false },
 ];
 
 app.whenReady().then(async () => {
@@ -42,14 +44,15 @@ app.whenReady().then(async () => {
 
   for (const c of CASES) {
     const args = {
-      numerator: 42,
-      denominator: 87,
+      numerator: c.numerator,
+      denominator: c.denominator,
       style: c.style,
       isDark: c.isDark,
       headerTitle: 'ClaudeQuota',
       headerDetail: 'as of 14:30 on 7 August 2026',
       lineOne: c.lineOne,
       lineTwo: c.lineTwo,
+      hasData: c.hasData,
     };
     const dimensions = computeDimensions(args);
     win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
