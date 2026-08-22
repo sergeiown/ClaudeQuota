@@ -6,7 +6,6 @@
 const fs = require('fs');
 const path = require('path');
 const { BrowserWindow, screen, ipcMain } = require('electron');
-const log = require('./logger');
 const {
   renderBarPreview,
   renderColumnPreview,
@@ -207,7 +206,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
 </style>
 </head>
 <body>
-  <button class="pin-btn ${pinned ? 'pinned' : ''}" id="pinBtn" title="${pinned ? 'Unpin' : 'Pin (keep open and on top)'}" aria-pressed="${pinned}">
+  <button class="pin-btn ${pinned ? 'pinned' : ''}" id="pinBtn" title="${pinned ? 'Unpin' : 'Pin (keep open)'}" aria-pressed="${pinned}">
     <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.97V22h2.06v-6H19v-2z"/></svg>
   </button>
   <div class="header">
@@ -237,18 +236,8 @@ function positionNearTray(win, trayBounds, dimensions) {
     y = trayBounds.y + trayBounds.height + TRAY_GAP;
   }
 
-  log.info('popup: positionNearTray', {
-    trayBounds,
-    dimensions,
-    allDisplays: screen.getAllDisplays().map((d) => ({ id: d.id, bounds: d.bounds, workArea: d.workArea, scaleFactor: d.scaleFactor })),
-    matchedDisplay: { id: display.id, bounds: display.bounds, workArea: display.workArea, scaleFactor: display.scaleFactor },
-    computed: { x, y },
-  });
-
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
-
-const PIN_REASSERT_INTERVAL_MS = 3000;
 
 // Square corners, not a CSS border-radius: a frameless window's actual pixel
 // bounds are always a plain rectangle, so a rounded card drawn inside one
@@ -259,7 +248,6 @@ function createPopupController() {
   let isPinned = false;
   let lastArgs = null;
   let lastTrayBounds = null;
-  let pinReassertTimer = null;
 
   // Closing uses opacity + click-through, not hide() or an off-screen
   // position - both throttle requestAnimationFrame (hide() directly, an
@@ -285,63 +273,13 @@ function createPopupController() {
       },
     });
     win.on('blur', () => {
-      log.info('popup: blur event', { isPinned, isOpen });
       if (!isPinned) closePopup();
-    });
-    win.webContents.on('preload-error', (event, preloadPath, error) => {
-      log.error('popup: preload failed', preloadPath, error);
-    });
-    win.webContents.on('render-process-gone', (event, details) => {
-      log.error('popup: renderer gone', details);
     });
     return win;
   }
 
-  // Windows only tracks one topmost-ordering, shared by every topmost
-  // window from every app - another app re-asserting its own (e.g. VS
-  // Code showing a suggestion widget) can end up above ours even though
-  // our flag never changed. moveTop() pushes past whatever else has since
-  // claimed the front, without touching the always-on-top flag itself.
-  function bringToFront(w) {
-    w.setAlwaysOnTop(true);
-    w.moveTop();
-  }
-
-  // Flipping the flag off then back on forces a fresh reorder even when it
-  // was already true (Electron treats setting it to what it already is as
-  // a no-op) - more forceful than bringToFront(), but only safe once the
-  // window is already stably shown, not while it's still being positioned
-  // and faded in during open() - doing it there was flipping the window
-  // out of the topmost band right as Windows was still compositing the
-  // show()/setOpacity() transition, and it would end up not actually
-  // visible at all instead of just occasionally losing the top spot.
-  function reassertOnTop(w) {
-    w.setAlwaysOnTop(false);
-    w.setAlwaysOnTop(true, 'screen-saver');
-    w.moveTop();
-  }
-
-  function startPinReassert(w) {
-    stopPinReassert();
-    pinReassertTimer = setInterval(() => {
-      if (w.isDestroyed()) return stopPinReassert();
-      reassertOnTop(w);
-    }, PIN_REASSERT_INTERVAL_MS);
-  }
-
-  function stopPinReassert() {
-    if (pinReassertTimer) clearInterval(pinReassertTimer);
-    pinReassertTimer = null;
-  }
-
   ipcMain.on('popup:toggle-pin', async () => {
     isPinned = !isPinned;
-    const w = ensureWindow();
-    if (isPinned) {
-      startPinReassert(w);
-    } else {
-      stopPinReassert();
-    }
     if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
   });
 
@@ -358,13 +296,10 @@ function createPopupController() {
     const fullArgs = { ...args, pinned: isPinned };
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs));
     await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
-    log.info('popup: loadURL done, waiting for paint');
     await waitForPaint(w);
-    log.info('popup: paint confirmed');
   }
 
   function closePopup() {
-    log.info('popup: closePopup', { hadWindow: Boolean(win) });
     if (!win || win.isDestroyed()) return;
     isOpen = false;
     win.setOpacity(0);
@@ -372,47 +307,25 @@ function createPopupController() {
   }
 
   async function openPopup(args, trayBounds) {
-    log.info('popup: openPopup start', { trayBounds });
     await render(args, trayBounds);
     const w = ensureWindow();
     // Re-asserted on every open - other apps' own always-on-top windows
     // could otherwise still end up above a topmost flag that was only
     // ever set once, back when the window was first created.
-    bringToFront(w);
+    w.setAlwaysOnTop(true);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
     w.setOpacity(1);
     w.focus();
     isOpen = true;
-    log.info('popup: openPopup done', {
-      opacity: w.getOpacity(),
-      visible: w.isVisible(),
-      alwaysOnTop: w.isAlwaysOnTop(),
-      bounds: w.getBounds(),
-    });
-    // Diagnostic only - proves what actually got painted instead of
-    // guessing from state flags that all look correct on their own.
-    try {
-      const image = await w.webContents.capturePage();
-      const shotPath = path.join(require('os').tmpdir(), 'claudequota-popup-shot.png');
-      fs.writeFileSync(shotPath, image.toPNG());
-      log.info('popup: screenshot saved', shotPath);
-    } catch (err) {
-      log.error('popup: screenshot failed', err);
-    }
   }
 
   async function toggle(args, trayBounds) {
-    log.info('popup: toggle', { isOpen });
-    try {
-      if (isOpen) {
-        closePopup();
-        return;
-      }
-      await openPopup(args, trayBounds);
-    } catch (err) {
-      log.error('popup: toggle failed', err);
+    if (isOpen) {
+      closePopup();
+      return;
     }
+    await openPopup(args, trayBounds);
   }
 
   async function updateIfVisible(args, trayBounds) {
@@ -424,7 +337,6 @@ function createPopupController() {
   }
 
   function destroy() {
-    stopPinReassert();
     if (win && !win.isDestroyed()) win.destroy();
   }
 
