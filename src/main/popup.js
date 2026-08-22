@@ -284,9 +284,21 @@ function createPopupController() {
   // Windows only tracks one topmost-ordering, shared by every topmost
   // window from every app - another app re-asserting its own (e.g. VS
   // Code showing a suggestion widget) can end up above ours even though
-  // our flag never changed. Toggling the flag off then back on forces a
-  // fresh reorder instead of a no-op when it was already true, and
-  // moveTop() pushes past whatever else has since claimed the front.
+  // our flag never changed. moveTop() pushes past whatever else has since
+  // claimed the front, without touching the always-on-top flag itself.
+  function bringToFront(w) {
+    w.setAlwaysOnTop(true);
+    w.moveTop();
+  }
+
+  // Flipping the flag off then back on forces a fresh reorder even when it
+  // was already true (Electron treats setting it to what it already is as
+  // a no-op) - more forceful than bringToFront(), but only safe once the
+  // window is already stably shown, not while it's still being positioned
+  // and faded in during open() - doing it there was flipping the window
+  // out of the topmost band right as Windows was still compositing the
+  // show()/setOpacity() transition, and it would end up not actually
+  // visible at all instead of just occasionally losing the top spot.
   function reassertOnTop(w) {
     w.setAlwaysOnTop(false);
     w.setAlwaysOnTop(true, 'screen-saver');
@@ -346,7 +358,7 @@ function createPopupController() {
     // Re-asserted on every open - other apps' own always-on-top windows
     // could otherwise still end up above a topmost flag that was only
     // ever set once, back when the window was first created.
-    reassertOnTop(w);
+    bringToFront(w);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
     w.setOpacity(1);
