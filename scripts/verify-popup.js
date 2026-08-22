@@ -33,6 +33,8 @@ const CASES = [
   { name: 'columns-tiny', style: 'columns', isDark: false, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true },
   { name: 'bars-full', style: 'bars', isDark: true, numerator: 100, denominator: 100, lineOne: 'resetting now', lineTwo: 'resetting now', hasData: true },
   { name: 'bars-nodata', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude login`.', lineTwo: '', hasData: false },
+  { name: 'bars-pinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true },
+  { name: 'bars-unpinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: false },
 ];
 
 app.whenReady().then(async () => {
@@ -53,6 +55,7 @@ app.whenReady().then(async () => {
       lineOne: c.lineOne,
       lineTwo: c.lineTwo,
       hasData: c.hasData,
+      pinned: c.pinned || false,
     };
     const dimensions = computeDimensions(args);
     win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });

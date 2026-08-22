@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { BrowserWindow, screen } = require('electron');
+const { BrowserWindow, screen, ipcMain } = require('electron');
 const {
   renderBarPreview,
   renderColumnPreview,
@@ -72,7 +72,7 @@ function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, not
       </div>`;
 }
 
-function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData }) {
+function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
@@ -83,6 +83,8 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
   const noteColor = isDark ? 'rgba(244,244,245,0.5)' : 'rgba(26,26,26,0.5)';
   const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
+  const pinHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const pinAccent = isDark ? '#5aa9ff' : '#1a73e8';
   const gradient = isDark
     ? 'linear-gradient(160deg, rgba(46,46,50,0.97), rgba(24,24,27,0.96))'
     : 'linear-gradient(160deg, rgba(255,255,255,0.97), rgba(240,241,245,0.95))';
@@ -120,6 +122,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
 <style>
   html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
   body {
+    position: relative;
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
@@ -179,15 +182,44 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
   .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
+  .pin-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    padding: 0;
+    color: ${mutedColor};
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
+  .pin-btn:hover { background: ${pinHoverBg}; }
+  .pin-btn svg { fill: currentColor; transition: transform 0.15s ease; }
+  .pin-btn.pinned { color: ${pinAccent}; }
+  .pin-btn.pinned svg { transform: rotate(45deg); }
 </style>
 </head>
 <body>
+  <button class="pin-btn ${pinned ? 'pinned' : ''}" id="pinBtn" title="${pinned ? 'Unpin' : 'Pin (keep open and on top)'}" aria-pressed="${pinned}">
+    <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.97V22h2.06v-6H19v-2z"/></svg>
+  </button>
   <div class="header">
     <div class="header-title">${escapeHtml(headerTitle)}</div>
     ${headerDetail ? `<div class="header-detail">${escapeHtml(headerDetail)}</div>` : ''}
   </div>
   ${content}
   ${hasData ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
+  <script>
+    document.getElementById('pinBtn').addEventListener('click', () => {
+      if (window.popupApi) window.popupApi.togglePin();
+    });
+  </script>
 </body>
 </html>`;
 }
@@ -207,12 +239,18 @@ function positionNearTray(win, trayBounds, dimensions) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
+const PIN_REASSERT_INTERVAL_MS = 3000;
+
 // Square corners, not a CSS border-radius: a frameless window's actual pixel
 // bounds are always a plain rectangle, so a rounded card drawn inside one
 // reads as a sticker on a square window - a shadow alone avoids that.
 function createPopupController() {
   let win = null;
   let isOpen = false;
+  let isPinned = false;
+  let lastArgs = null;
+  let lastTrayBounds = null;
+  let pinReassertTimer = null;
 
   // Closing uses opacity + click-through, not hide() or an off-screen
   // position - both throttle requestAnimationFrame (hide() directly, an
@@ -230,11 +268,54 @@ function createPopupController() {
       transparent: true,
       opacity: 0,
       hasShadow: false, // the card paints its own CSS shadow instead
-      webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        preload: path.join(__dirname, 'popup-preload.js'),
+      },
     });
-    win.on('blur', () => closePopup());
+    win.on('blur', () => {
+      if (!isPinned) closePopup();
+    });
     return win;
   }
+
+  // Windows only tracks one topmost-ordering, shared by every topmost
+  // window from every app - another app re-asserting its own (e.g. VS
+  // Code showing a suggestion widget) can end up above ours even though
+  // our flag never changed. Toggling the flag off then back on forces a
+  // fresh reorder instead of a no-op when it was already true, and
+  // moveTop() pushes past whatever else has since claimed the front.
+  function reassertOnTop(w) {
+    w.setAlwaysOnTop(false);
+    w.setAlwaysOnTop(true, 'screen-saver');
+    w.moveTop();
+  }
+
+  function startPinReassert(w) {
+    stopPinReassert();
+    pinReassertTimer = setInterval(() => {
+      if (w.isDestroyed()) return stopPinReassert();
+      reassertOnTop(w);
+    }, PIN_REASSERT_INTERVAL_MS);
+  }
+
+  function stopPinReassert() {
+    if (pinReassertTimer) clearInterval(pinReassertTimer);
+    pinReassertTimer = null;
+  }
+
+  ipcMain.on('popup:toggle-pin', async () => {
+    isPinned = !isPinned;
+    const w = ensureWindow();
+    if (isPinned) {
+      startPinReassert(w);
+    } else {
+      stopPinReassert();
+    }
+    if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
+  });
 
   function waitForPaint(w) {
     return w.webContents.executeJavaScript(
@@ -244,8 +325,11 @@ function createPopupController() {
 
   async function render(args, trayBounds) {
     const w = ensureWindow();
-    if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(args));
-    await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(args))}`);
+    lastArgs = args;
+    lastTrayBounds = trayBounds;
+    const fullArgs = { ...args, pinned: isPinned };
+    if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs));
+    await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
     await waitForPaint(w);
   }
 
@@ -262,7 +346,7 @@ function createPopupController() {
     // Re-asserted on every open - other apps' own always-on-top windows
     // could otherwise still end up above a topmost flag that was only
     // ever set once, back when the window was first created.
-    w.setAlwaysOnTop(true);
+    reassertOnTop(w);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
     w.setOpacity(1);
@@ -287,6 +371,7 @@ function createPopupController() {
   }
 
   function destroy() {
+    stopPinReassert();
     if (win && !win.isDestroyed()) win.destroy();
   }
 
