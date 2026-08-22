@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { BrowserWindow, screen, ipcMain } = require('electron');
+const log = require('./logger');
 const {
   renderBarPreview,
   renderColumnPreview,
@@ -276,7 +277,14 @@ function createPopupController() {
       },
     });
     win.on('blur', () => {
+      log.info('popup: blur event', { isPinned, isOpen });
       if (!isPinned) closePopup();
+    });
+    win.webContents.on('preload-error', (event, preloadPath, error) => {
+      log.error('popup: preload failed', preloadPath, error);
+    });
+    win.webContents.on('render-process-gone', (event, details) => {
+      log.error('popup: renderer gone', details);
     });
     return win;
   }
@@ -342,10 +350,13 @@ function createPopupController() {
     const fullArgs = { ...args, pinned: isPinned };
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs));
     await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
+    log.info('popup: loadURL done, waiting for paint');
     await waitForPaint(w);
+    log.info('popup: paint confirmed');
   }
 
   function closePopup() {
+    log.info('popup: closePopup', { hadWindow: Boolean(win) });
     if (!win || win.isDestroyed()) return;
     isOpen = false;
     win.setOpacity(0);
@@ -353,6 +364,7 @@ function createPopupController() {
   }
 
   async function openPopup(args, trayBounds) {
+    log.info('popup: openPopup start', { trayBounds });
     await render(args, trayBounds);
     const w = ensureWindow();
     // Re-asserted on every open - other apps' own always-on-top windows
@@ -364,14 +376,25 @@ function createPopupController() {
     w.setOpacity(1);
     w.focus();
     isOpen = true;
+    log.info('popup: openPopup done', {
+      opacity: w.getOpacity(),
+      visible: w.isVisible(),
+      alwaysOnTop: w.isAlwaysOnTop(),
+      bounds: w.getBounds(),
+    });
   }
 
   async function toggle(args, trayBounds) {
-    if (isOpen) {
-      closePopup();
-      return;
+    log.info('popup: toggle', { isOpen });
+    try {
+      if (isOpen) {
+        closePopup();
+        return;
+      }
+      await openPopup(args, trayBounds);
+    } catch (err) {
+      log.error('popup: toggle failed', err);
     }
-    await openPopup(args, trayBounds);
   }
 
   async function updateIfVisible(args, trayBounds) {
