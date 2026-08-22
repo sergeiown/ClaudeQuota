@@ -237,6 +237,14 @@ function positionNearTray(win, trayBounds, dimensions) {
     y = trayBounds.y + trayBounds.height + TRAY_GAP;
   }
 
+  log.info('popup: positionNearTray', {
+    trayBounds,
+    dimensions,
+    allDisplays: screen.getAllDisplays().map((d) => ({ id: d.id, bounds: d.bounds, workArea: d.workArea, scaleFactor: d.scaleFactor })),
+    matchedDisplay: { id: display.id, bounds: display.bounds, workArea: display.workArea, scaleFactor: display.scaleFactor },
+    computed: { x, y },
+  });
+
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
