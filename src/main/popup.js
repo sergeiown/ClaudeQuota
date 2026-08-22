@@ -390,6 +390,16 @@ function createPopupController() {
       alwaysOnTop: w.isAlwaysOnTop(),
       bounds: w.getBounds(),
     });
+    // Diagnostic only - proves what actually got painted instead of
+    // guessing from state flags that all look correct on their own.
+    try {
+      const image = await w.webContents.capturePage();
+      const shotPath = path.join(require('os').tmpdir(), 'claudequota-popup-shot.png');
+      fs.writeFileSync(shotPath, image.toPNG());
+      log.info('popup: screenshot saved', shotPath);
+    } catch (err) {
+      log.error('popup: screenshot failed', err);
+    }
   }
 
   async function toggle(args, trayBounds) {
