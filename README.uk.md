@@ -51,3 +51,6 @@
 [MIT](LICENSE).
 
 Використовує шрифт [Fredoka](https://fonts.google.com/specimen/Fredoka) (SIL Open Font License, див. `assets/fonts/OFL.txt`).
+
+##
+> **Примітка. Якщо ви в Україні - перевірте, чи стежите ви за тривогами у вашому регіоні. [Alert Server](https://github.com/sergeiown/Alert_Server) - мій застосунок для Windows з відкритим кодом, без жодної реклами чи прихованих умов, що показує сповіщення про повітряну тривогу, live-мапу загроз і лінію фронту для обраних вами регіонів. Будьте в безпеці.**
