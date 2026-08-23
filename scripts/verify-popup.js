@@ -35,6 +35,10 @@ const CASES = [
   { name: 'bars-nodata', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude login`.', lineTwo: '', hasData: false },
   { name: 'bars-pinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true },
   { name: 'bars-unpinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: false },
+  { name: 'bars-mini-dark', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true, minimized: true },
+  { name: 'bars-mini-light', style: 'bars', isDark: false, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true, minimized: true },
+  { name: 'columns-mini-dark', style: 'columns', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true, minimized: true },
+  { name: 'bars-mini-tiny', style: 'bars', isDark: true, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true, pinned: true, minimized: true },
 ];
 
 app.whenReady().then(async () => {
@@ -56,6 +60,7 @@ app.whenReady().then(async () => {
       lineTwo: c.lineTwo,
       hasData: c.hasData,
       pinned: c.pinned || false,
+      minimized: c.minimized || false,
     };
     const dimensions = computeDimensions(args);
     win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });

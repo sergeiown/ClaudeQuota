@@ -7,4 +7,5 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('popupApi', {
   togglePin: () => ipcRenderer.send('popup:toggle-pin'),
+  toggleMinimize: () => ipcRenderer.send('popup:toggle-minimize'),
 });

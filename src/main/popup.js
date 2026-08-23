@@ -35,15 +35,36 @@ const COLUMNS_WIDTH = 380;
 const COLUMNS_HEIGHT = 540;
 const COLUMN_BLOCK_WIDTH = 160;
 
+// Minimized (pinned + collapsed) mode drops the header, the explanatory
+// notes and the footer, and shrinks the capsules themselves - just a
+// glanceable two-capsule readout, not a smaller copy of the full popup.
+const MINI_BAR_IMG_WIDTH = 220;
+const MINI_BAR_IMG_HEIGHT = 78;
+const MINI_COL_IMG_WIDTH = 46;
+const MINI_COL_IMG_HEIGHT = 220;
+const MINI_COLUMN_BLOCK_WIDTH = 110;
+
+const MINI_BARS_WIDTH = 240;
+const MINI_BARS_HEIGHT = 272;
+const MINI_COLUMNS_WIDTH = 260;
+const MINI_COLUMNS_HEIGHT = 320;
+
+const MINIMIZED_OPACITY = 0.7;
+
 // Fixed per style - the detail text under each bar comes from a small,
 // known set of app-authored strings, not arbitrary user input, so its
 // height doesn't need to be measured/estimated like the old rotated
 // column label did.
-function computeDimensions({ style }) {
-  if (style === 'columns') {
-    return { width: COLUMNS_WIDTH, height: COLUMNS_HEIGHT };
+function computeDimensions({ style, minimized }) {
+  const isColumns = style === 'columns';
+  if (minimized) {
+    return isColumns
+      ? { width: MINI_COLUMNS_WIDTH, height: MINI_COLUMNS_HEIGHT }
+      : { width: MINI_BARS_WIDTH, height: MINI_BARS_HEIGHT };
   }
-  return { width: BARS_WIDTH, height: BARS_HEIGHT };
+  return isColumns
+    ? { width: COLUMNS_WIDTH, height: COLUMNS_HEIGHT }
+    : { width: BARS_WIDTH, height: BARS_HEIGHT };
 }
 
 function escapeHtml(text) {
@@ -72,11 +93,14 @@ function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, not
       </div>`;
 }
 
-function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned }) {
+function buildHtml({
+  numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
+}) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
   const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
   const isColumns = style === 'columns';
+  const showNotes = hasData && !minimized;
 
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
@@ -100,7 +124,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     percentText: hasData ? `5h ${numerator}%` : '5h',
     overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
     resetLine: hasData ? `${FIVE_HOUR_LABEL} ${lineOne}` : lineOne,
-    note: hasData ? FIVE_HOUR_NOTE : null,
+    note: showNotes ? FIVE_HOUR_NOTE : null,
   });
   const blockTwo = buildBlock({
     imgClass: isColumns ? 'col-img' : 'bar-img',
@@ -108,12 +132,23 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     percentText: hasData ? `7d ${denominator}%` : '7d',
     overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
     resetLine: hasData ? `${SEVEN_DAY_LABEL} ${lineTwo}` : lineTwo,
-    note: hasData ? SEVEN_DAY_NOTE : null,
+    note: showNotes ? SEVEN_DAY_NOTE : null,
   });
 
   const content = isColumns
     ? `<div class="col-group">${blockOne}${blockTwo}</div>`
     : `<div class="bar-stack">${blockOne}${blockTwo}</div>`;
+
+  const minimizeButton = pinned
+    ? `
+  <button class="pin-btn minimize-btn ${minimized ? 'mini-active' : ''}" id="minimizeBtn" title="${minimized ? 'Restore' : 'Minimize'}" aria-pressed="${minimized}">
+    <svg viewBox="0 0 24 24" width="14" height="14">${
+      minimized
+        ? '<rect x="5" y="5" width="14" height="14" style="fill:none;stroke:currentColor;stroke-width:2"/>'
+        : '<rect x="4" y="17" width="16" height="2" style="fill:currentColor"/>'
+    }</svg>
+  </button>`
+    : '';
 
   return `<!doctype html>
 <html>
@@ -139,6 +174,7 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
     justify-content: center;
     -webkit-user-select: none;
   }
+  body.mini { padding: 38px 10px 10px 10px; }
   @font-face {
     font-family: 'Fredoka';
     font-weight: 600;
@@ -148,12 +184,17 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
   .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
   .bar-stack { display: flex; flex-direction: column; gap: 20px; }
+  body.mini .bar-stack { gap: 6px; }
   .col-group { display: flex; flex-direction: row; gap: 24px; align-items: flex-start; }
+  body.mini .col-group { gap: 14px; }
   .block { display: flex; flex-direction: column; align-items: center; }
   .col-group .block { width: ${COLUMN_BLOCK_WIDTH}px; }
+  body.mini .col-group .block { width: ${MINI_COLUMN_BLOCK_WIDTH}px; }
   .img-wrap { position: relative; display: inline-flex; }
   .bar-img { width: ${PREVIEW_BAR_WIDTH}px; height: ${PREVIEW_BAR_HEIGHT}px; }
   .col-img { width: ${PREVIEW_COLUMN_WIDTH}px; height: ${PREVIEW_COLUMN_HEIGHT}px; }
+  body.mini .bar-img { width: ${MINI_BAR_IMG_WIDTH}px; height: ${MINI_BAR_IMG_HEIGHT}px; }
+  body.mini .col-img { width: ${MINI_COL_IMG_WIDTH}px; height: ${MINI_COL_IMG_HEIGHT}px; }
   .percent-overlay {
     position: absolute;
     inset: 0;
@@ -178,8 +219,12 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   }
   .percent-overlay.bars-overlay { font-size: 30px; letter-spacing: 0.4px; }
   .percent-overlay.columns-overlay { flex-direction: column; font-size: 17px; line-height: 1.15; gap: 1px; }
+  body.mini .percent-overlay.bars-overlay { font-size: 18px; letter-spacing: 0.2px; }
+  body.mini .percent-overlay.columns-overlay { font-size: 11px; gap: 0; }
   .detail { margin-top: 8px; text-align: center; }
+  body.mini .detail { margin-top: 4px; }
   .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
+  body.mini .detail-reset { font-size: 12px; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
   .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
   .pin-btn {
@@ -203,22 +248,32 @@ function buildHtml({ numerator, denominator, style, isDark, headerTitle, headerD
   .pin-btn svg { fill: currentColor; transition: transform 0.15s ease; }
   .pin-btn.pinned { color: ${pinAccent}; }
   .pin-btn.pinned svg { transform: rotate(45deg); }
+  .minimize-btn { left: 10px; right: auto; }
+  .minimize-btn.mini-active { color: ${pinAccent}; }
 </style>
 </head>
-<body>
+<body class="${minimized ? 'mini' : ''}">
   <button class="pin-btn ${pinned ? 'pinned' : ''}" id="pinBtn" title="${pinned ? 'Unpin' : 'Pin (keep open)'}" aria-pressed="${pinned}">
     <svg viewBox="0 0 24 24" width="14" height="14"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.97V22h2.06v-6H19v-2z"/></svg>
   </button>
+  ${minimizeButton}
+  ${!minimized ? `
   <div class="header">
     <div class="header-title">${escapeHtml(headerTitle)}</div>
     ${headerDetail ? `<div class="header-detail">${escapeHtml(headerDetail)}</div>` : ''}
-  </div>
+  </div>` : ''}
   ${content}
-  ${hasData ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
+  ${showNotes ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
   <script>
     document.getElementById('pinBtn').addEventListener('click', () => {
       if (window.popupApi) window.popupApi.togglePin();
     });
+    const minimizeBtn = document.getElementById('minimizeBtn');
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', () => {
+        if (window.popupApi) window.popupApi.toggleMinimize();
+      });
+    }
   </script>
 </body>
 </html>`;
@@ -246,6 +301,7 @@ function createPopupController() {
   let win = null;
   let isOpen = false;
   let isPinned = false;
+  let isMinimized = false;
   let lastArgs = null;
   let lastTrayBounds = null;
 
@@ -278,9 +334,28 @@ function createPopupController() {
     return win;
   }
 
+  function applyOpenOpacity(w) {
+    w.setOpacity(isMinimized ? MINIMIZED_OPACITY : 1);
+  }
+
   ipcMain.on('popup:toggle-pin', async () => {
     isPinned = !isPinned;
-    if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
+    // Minimize only makes sense while pinned - unpinning always drops back
+    // to the full popup instead of leaving a stray collapsed+unpinned state.
+    if (!isPinned) isMinimized = false;
+    if (isOpen && lastArgs) {
+      await render(lastArgs, lastTrayBounds);
+      applyOpenOpacity(ensureWindow());
+    }
+  });
+
+  ipcMain.on('popup:toggle-minimize', async () => {
+    if (!isPinned) return;
+    isMinimized = !isMinimized;
+    if (isOpen && lastArgs) {
+      await render(lastArgs, lastTrayBounds);
+      applyOpenOpacity(ensureWindow());
+    }
   });
 
   function waitForPaint(w) {
@@ -293,7 +368,7 @@ function createPopupController() {
     const w = ensureWindow();
     lastArgs = args;
     lastTrayBounds = trayBounds;
-    const fullArgs = { ...args, pinned: isPinned };
+    const fullArgs = { ...args, pinned: isPinned, minimized: isMinimized };
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs));
     await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
     await waitForPaint(w);
@@ -315,7 +390,7 @@ function createPopupController() {
     w.setAlwaysOnTop(true);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
-    w.setOpacity(1);
+    applyOpenOpacity(w);
     w.focus();
     isOpen = true;
   }
