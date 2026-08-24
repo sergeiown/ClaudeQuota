@@ -36,18 +36,24 @@ const COLUMNS_HEIGHT = 540;
 const COLUMN_BLOCK_WIDTH = 160;
 
 // Minimized (pinned + collapsed) mode drops the header, the explanatory
-// notes and the footer, and shrinks the capsules themselves - just a
-// glanceable two-capsule readout, not a smaller copy of the full popup.
-const MINI_BAR_IMG_WIDTH = 220;
-const MINI_BAR_IMG_HEIGHT = 78;
+// notes, the footer and the window-label prefix, and shrinks the
+// capsules themselves - just a glanceable two-capsule readout, not a
+// smaller copy of the full popup.
+const MINI_BAR_IMG_WIDTH = 200;
+const MINI_BAR_IMG_HEIGHT = 56;
 const MINI_COL_IMG_WIDTH = 46;
-const MINI_COL_IMG_HEIGHT = 220;
+const MINI_COL_IMG_HEIGHT = 150;
 const MINI_COLUMN_BLOCK_WIDTH = 110;
 
-const MINI_BARS_WIDTH = 240;
-const MINI_BARS_HEIGHT = 272;
-const MINI_COLUMNS_WIDTH = 260;
-const MINI_COLUMNS_HEIGHT = 320;
+const MINI_BARS_WIDTH = 212;
+const MINI_BARS_HEIGHT = 200;
+const MINI_COLUMNS_WIDTH = 244;
+const MINI_COLUMNS_HEIGHT = 230;
+
+// Hugs the right edge instead of centering over the tray icon - just
+// enough room left over for a scrollbar, so it reads as a fixed corner
+// readout rather than a popup anchored to one particular icon.
+const MINI_RIGHT_MARGIN = 16;
 
 const MINIMIZED_OPACITY = 0.7;
 
@@ -123,7 +129,9 @@ function buildHtml({
     // as a measured value rather than as "unknown".
     percentText: hasData ? `5h ${numerator}%` : '5h',
     overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
-    resetLine: hasData ? `${FIVE_HOUR_LABEL} ${lineOne}` : lineOne,
+    // The window-label prefix is dropped in mini mode - there's no room
+    // for it, and the bar's own "5h"/"7d" overlay already says which is which.
+    resetLine: hasData ? (minimized ? lineOne : `${FIVE_HOUR_LABEL} ${lineOne}`) : lineOne,
     note: showNotes ? FIVE_HOUR_NOTE : null,
   });
   const blockTwo = buildBlock({
@@ -131,7 +139,7 @@ function buildHtml({
     image: imageTwo,
     percentText: hasData ? `7d ${denominator}%` : '7d',
     overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
-    resetLine: hasData ? `${SEVEN_DAY_LABEL} ${lineTwo}` : lineTwo,
+    resetLine: hasData ? (minimized ? lineTwo : `${SEVEN_DAY_LABEL} ${lineTwo}`) : lineTwo,
     note: showNotes ? SEVEN_DAY_NOTE : null,
   });
 
@@ -174,7 +182,7 @@ function buildHtml({
     justify-content: center;
     -webkit-user-select: none;
   }
-  body.mini { padding: 38px 10px 10px 10px; }
+  body.mini { padding: 36px 6px 6px 6px; }
   @font-face {
     font-family: 'Fredoka';
     font-weight: 600;
@@ -184,9 +192,9 @@ function buildHtml({
   .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
   .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
   .bar-stack { display: flex; flex-direction: column; gap: 20px; }
-  body.mini .bar-stack { gap: 6px; }
+  body.mini .bar-stack { gap: 4px; }
   .col-group { display: flex; flex-direction: row; gap: 24px; align-items: flex-start; }
-  body.mini .col-group { gap: 14px; }
+  body.mini .col-group { gap: 10px; }
   .block { display: flex; flex-direction: column; align-items: center; }
   .col-group .block { width: ${COLUMN_BLOCK_WIDTH}px; }
   body.mini .col-group .block { width: ${MINI_COLUMN_BLOCK_WIDTH}px; }
@@ -219,10 +227,10 @@ function buildHtml({
   }
   .percent-overlay.bars-overlay { font-size: 30px; letter-spacing: 0.4px; }
   .percent-overlay.columns-overlay { flex-direction: column; font-size: 17px; line-height: 1.15; gap: 1px; }
-  body.mini .percent-overlay.bars-overlay { font-size: 18px; letter-spacing: 0.2px; }
-  body.mini .percent-overlay.columns-overlay { font-size: 11px; gap: 0; }
+  body.mini .percent-overlay.bars-overlay { font-size: 15px; letter-spacing: 0.1px; }
+  body.mini .percent-overlay.columns-overlay { font-size: 10px; gap: 0; }
   .detail { margin-top: 8px; text-align: center; }
-  body.mini .detail { margin-top: 4px; }
+  body.mini .detail { margin-top: 2px; }
   .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
   body.mini .detail-reset { font-size: 12px; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
@@ -279,12 +287,20 @@ function buildHtml({
 </html>`;
 }
 
-function positionNearTray(win, trayBounds, dimensions) {
+function positionNearTray(win, trayBounds, dimensions, minimized) {
   const display = screen.getDisplayMatching(trayBounds);
   const { workArea } = display;
 
-  let x = Math.round(trayBounds.x + trayBounds.width / 2 - dimensions.width / 2);
-  x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - dimensions.width));
+  let x;
+  if (minimized) {
+    // A fixed corner readout rather than a popup anchored to one
+    // particular tray icon - hugs the right edge, leaving only enough
+    // room for a scrollbar.
+    x = workArea.x + workArea.width - dimensions.width - MINI_RIGHT_MARGIN;
+  } else {
+    x = Math.round(trayBounds.x + trayBounds.width / 2 - dimensions.width / 2);
+    x = Math.max(workArea.x, Math.min(x, workArea.x + workArea.width - dimensions.width));
+  }
 
   let y = trayBounds.y - dimensions.height - TRAY_GAP;
   if (y < workArea.y) {
@@ -369,7 +385,7 @@ function createPopupController() {
     lastArgs = args;
     lastTrayBounds = trayBounds;
     const fullArgs = { ...args, pinned: isPinned, minimized: isMinimized };
-    if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs));
+    if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs), isMinimized);
     await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
     await waitForPaint(w);
   }
