@@ -59,12 +59,6 @@ const MINI_COLUMNS_HEIGHT = 185;
 // readout rather than a popup anchored to one particular icon.
 const MINI_RIGHT_MARGIN = 16;
 
-// More transparent than the full popup - meant to sit on screen during
-// active work without demanding attention. Only the window/card itself
-// goes more see-through (also via miniGradient in buildHtml below); the
-// capsules and label text keep the exact same alpha as the full popup.
-const MINIMIZED_OPACITY = 0.55;
-
 // Fixed per style - the detail text under each bar comes from a small,
 // known set of app-authored strings, not arbitrary user input, so its
 // height doesn't need to be measured/estimated like the old rotated
@@ -361,28 +355,18 @@ function createPopupController() {
     return win;
   }
 
-  function applyOpenOpacity(w) {
-    w.setOpacity(isMinimized ? MINIMIZED_OPACITY : 1);
-  }
-
   ipcMain.on('popup:toggle-pin', async () => {
     isPinned = !isPinned;
     // Minimize only makes sense while pinned - unpinning always drops back
     // to the full popup instead of leaving a stray collapsed+unpinned state.
     if (!isPinned) isMinimized = false;
-    if (isOpen && lastArgs) {
-      await render(lastArgs, lastTrayBounds);
-      applyOpenOpacity(ensureWindow());
-    }
+    if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
   });
 
   ipcMain.on('popup:toggle-minimize', async () => {
     if (!isPinned) return;
     isMinimized = !isMinimized;
-    if (isOpen && lastArgs) {
-      await render(lastArgs, lastTrayBounds);
-      applyOpenOpacity(ensureWindow());
-    }
+    if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
   });
 
   function waitForPaint(w) {
@@ -417,7 +401,7 @@ function createPopupController() {
     w.setAlwaysOnTop(true);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();
-    applyOpenOpacity(w);
+    w.setOpacity(1);
     w.focus();
     isOpen = true;
   }
