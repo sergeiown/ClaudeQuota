@@ -60,11 +60,9 @@ const MINI_COLUMNS_HEIGHT = 185;
 const MINI_RIGHT_MARGIN = 16;
 
 // More transparent than the full popup - meant to sit on screen during
-// active work without demanding attention. The card background's own
-// alpha is lowered further still (see miniGradient in buildHtml) so the
-// glass itself goes noticeably more see-through than the capsules and
-// label text sitting on top of it, which get their own alpha boosted to
-// compensate and stay legible either way.
+// active work without demanding attention. Only the window/card itself
+// goes more see-through (also via miniGradient in buildHtml below); the
+// capsules and label text keep the exact same alpha as the full popup.
 const MINIMIZED_OPACITY = 0.55;
 
 // Fixed per style - the detail text under each bar comes from a small,
@@ -113,18 +111,14 @@ function buildHtml({
   numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
 }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
-  const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark, mini: minimized }).toString('base64');
-  const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark, mini: minimized }).toString('base64');
+  const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
+  const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
   const isColumns = style === 'columns';
   const showNotes = hasData && !minimized;
 
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
-  // In mini mode the card itself goes much more transparent (see the
-  // mini gradient below), so the label text needs its own higher alpha
-  // to stay readable regardless of what's showing through behind it.
-  const miniLabelColor = isDark ? 'rgba(244,244,245,0.92)' : 'rgba(26,26,26,0.88)';
   const noteColor = isDark ? 'rgba(244,244,245,0.5)' : 'rgba(26,26,26,0.5)';
   const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
   const pinHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
@@ -249,7 +243,7 @@ function buildHtml({
   .detail { margin-top: 8px; text-align: center; }
   body.mini .detail { margin-top: 2px; }
   .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
-  body.mini .detail-reset { font-size: 12px; color: ${miniLabelColor}; }
+  body.mini .detail-reset { font-size: 12px; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
   .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
   .pin-btn {

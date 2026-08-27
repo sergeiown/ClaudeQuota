@@ -228,21 +228,9 @@ const PREVIEW_BAR_HEIGHT = 120;
 const PREVIEW_BAR_PILL_HEIGHT = 72;
 const PREVIEW_BAR_MARGIN_X = 24;
 
-// The mini popup window is deliberately more transparent overall (see
-// MINIMIZED_OPACITY in popup.js), which would wash out the track's
-// already-low-alpha tint along with everything else - boosting just its
-// alpha here keeps the capsule itself reading clearly regardless of what
-// shows through the rest of the window.
-const MINI_TRACK_ALPHA = 0.55;
-
-function boostedTrackAlpha(trackColor) {
-  return trackColor.replace(/[\d.]+\)$/, `${MINI_TRACK_ALPHA})`);
-}
-
-function renderBarPreview({ percent, variant, isDark, mini }) {
+function renderBarPreview({ percent, variant, isDark }) {
   const palette = getPalette(isDark);
-  let trackColor = variant === 'seven-day' ? palette.trackSevenDay : palette.trackFiveHour;
-  if (mini) trackColor = boostedTrackAlpha(trackColor);
+  const trackColor = variant === 'seven-day' ? palette.trackSevenDay : palette.trackFiveHour;
   const canvas = createCanvas(PREVIEW_BAR_WIDTH, PREVIEW_BAR_HEIGHT);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, PREVIEW_BAR_WIDTH, PREVIEW_BAR_HEIGHT);
@@ -259,10 +247,9 @@ const PREVIEW_COLUMN_HEIGHT = 340;
 const PREVIEW_COLUMN_PILL_WIDTH = 72;
 const PREVIEW_COLUMN_MARGIN_Y = 24;
 
-function renderColumnPreview({ percent, variant, isDark, mini }) {
+function renderColumnPreview({ percent, variant, isDark }) {
   const palette = getPalette(isDark);
-  let trackColor = variant === 'seven-day' ? palette.trackSevenDay : palette.trackFiveHour;
-  if (mini) trackColor = boostedTrackAlpha(trackColor);
+  const trackColor = variant === 'seven-day' ? palette.trackSevenDay : palette.trackFiveHour;
   const canvas = createCanvas(PREVIEW_COLUMN_WIDTH, PREVIEW_COLUMN_HEIGHT);
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, PREVIEW_COLUMN_WIDTH, PREVIEW_COLUMN_HEIGHT);
