@@ -41,21 +41,31 @@ const COLUMN_BLOCK_WIDTH = 160;
 // smaller copy of the full popup.
 const MINI_BAR_IMG_WIDTH = 200;
 const MINI_BAR_IMG_HEIGHT = 56;
-const MINI_COL_IMG_WIDTH = 46;
-const MINI_COL_IMG_HEIGHT = 150;
-const MINI_COLUMN_BLOCK_WIDTH = 110;
+// Narrower columns read fine at the reduced height used elsewhere in mini
+// mode, but a taller column needs more width or the fill level itself
+// gets hard to judge - shorter and a bit wider than a plain scaled-down
+// copy of the full popup's column.
+const MINI_COL_IMG_WIDTH = 58;
+const MINI_COL_IMG_HEIGHT = 110;
+const MINI_COLUMN_BLOCK_WIDTH = 120;
 
 const MINI_BARS_WIDTH = 212;
 const MINI_BARS_HEIGHT = 200;
-const MINI_COLUMNS_WIDTH = 244;
-const MINI_COLUMNS_HEIGHT = 230;
+const MINI_COLUMNS_WIDTH = 265;
+const MINI_COLUMNS_HEIGHT = 185;
 
 // Hugs the right edge instead of centering over the tray icon - just
 // enough room left over for a scrollbar, so it reads as a fixed corner
 // readout rather than a popup anchored to one particular icon.
 const MINI_RIGHT_MARGIN = 16;
 
-const MINIMIZED_OPACITY = 0.7;
+// More transparent than the full popup - meant to sit on screen during
+// active work without demanding attention. The card background's own
+// alpha is lowered further still (see miniGradient in buildHtml) so the
+// glass itself goes noticeably more see-through than the capsules and
+// label text sitting on top of it, which get their own alpha boosted to
+// compensate and stay legible either way.
+const MINIMIZED_OPACITY = 0.55;
 
 // Fixed per style - the detail text under each bar comes from a small,
 // known set of app-authored strings, not arbitrary user input, so its
@@ -103,14 +113,18 @@ function buildHtml({
   numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
 }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
-  const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
-  const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark }).toString('base64');
+  const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark, mini: minimized }).toString('base64');
+  const imageTwo = renderFn({ percent: denominator, variant: 'seven-day', isDark, mini: minimized }).toString('base64');
   const isColumns = style === 'columns';
   const showNotes = hasData && !minimized;
 
   const titleColor = isDark ? 'rgba(244, 244, 245, 0.92)' : 'rgba(26, 26, 26, 0.85)';
   const detailColor = isDark ? 'rgba(244, 244, 245, 0.72)' : 'rgba(26, 26, 26, 0.68)';
   const mutedColor = isDark ? 'rgba(244,244,245,0.68)' : 'rgba(26,26,26,0.65)';
+  // In mini mode the card itself goes much more transparent (see the
+  // mini gradient below), so the label text needs its own higher alpha
+  // to stay readable regardless of what's showing through behind it.
+  const miniLabelColor = isDark ? 'rgba(244,244,245,0.92)' : 'rgba(26,26,26,0.88)';
   const noteColor = isDark ? 'rgba(244,244,245,0.5)' : 'rgba(26,26,26,0.5)';
   const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)';
   const pinHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
@@ -118,6 +132,9 @@ function buildHtml({
   const gradient = isDark
     ? 'linear-gradient(160deg, rgba(46,46,50,0.97), rgba(24,24,27,0.96))'
     : 'linear-gradient(160deg, rgba(255,255,255,0.97), rgba(240,241,245,0.95))';
+  const miniGradient = isDark
+    ? 'linear-gradient(160deg, rgba(46,46,50,0.55), rgba(24,24,27,0.5))'
+    : 'linear-gradient(160deg, rgba(255,255,255,0.55), rgba(240,241,245,0.5))';
   const shadow = isDark
     ? '0 12px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4)'
     : '0 12px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)';
@@ -182,7 +199,7 @@ function buildHtml({
     justify-content: center;
     -webkit-user-select: none;
   }
-  body.mini { padding: 36px 6px 6px 6px; }
+  body.mini { padding: 36px 6px 6px 6px; background: ${miniGradient}; }
   @font-face {
     font-family: 'Fredoka';
     font-weight: 600;
@@ -232,7 +249,7 @@ function buildHtml({
   .detail { margin-top: 8px; text-align: center; }
   body.mini .detail { margin-top: 2px; }
   .detail-reset { font-size: 16px; font-weight: 600; color: ${mutedColor}; }
-  body.mini .detail-reset { font-size: 12px; }
+  body.mini .detail-reset { font-size: 12px; color: ${miniLabelColor}; }
   .detail-note { margin-top: 3px; font-size: 11.5px; color: ${noteColor}; line-height: 1.35; }
   .footer-note { margin-top: 16px; max-width: 340px; text-align: center; font-size: 11px; color: ${noteColor}; line-height: 1.35; }
   .pin-btn {
