@@ -22,14 +22,11 @@ const MENU_CROP = { x: 1585, y: 888, width: 208, height: 262 };
 
 const { app, Tray, nativeImage, nativeTheme } = require('electron');
 const { execFileSync } = require('child_process');
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
-const fs = require('fs');
 const path = require('path');
 const { renderFractionIcon } = require('../src/icon/render');
 const { buildTrayMenu } = require('../src/main/menu');
 
 const OUT_DIR = path.join(__dirname, '..', 'docs');
-const BG_MATCH_THRESHOLD = 24;
 
 function capturePowerShellRegion(x, y, width, height, outPath) {
   const script = `
@@ -42,54 +39,6 @@ $g.Dispose()
 $bmp.Dispose()
 `;
   execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script]);
-}
-
-// The crop still has whatever was behind the menu (this machine's desktop)
-// filling its corners, since the real menu card has rounded corners. Flood-
-// fills from every border pixel and erases anything close in color to what
-// it started from, leaving the card (and its soft drop shadow, which fades
-// gradually rather than in one flat color and so mostly survives the color
-// threshold) on a transparent background instead of a solid rectangle.
-async function cutBackgroundTransparent(pngPath) {
-  const img = await loadImage(fs.readFileSync(pngPath));
-  const { width, height } = img;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0);
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const { data } = imageData;
-
-  // The crop margin guarantees the very corner is background, not the card.
-  const [seedR, seedG, seedB] = [data[0], data[1], data[2]];
-
-  const visited = new Uint8Array(width * height);
-  const stack = [];
-  for (let x = 0; x < width; x++) {
-    stack.push(x, x + (height - 1) * width);
-  }
-  for (let y = 0; y < height; y++) {
-    stack.push(y * width, y * width + (width - 1));
-  }
-
-  while (stack.length) {
-    const idx = stack.pop();
-    if (visited[idx]) continue;
-    visited[idx] = 1;
-    const o = idx * 4;
-    const dist = Math.abs(data[o] - seedR) + Math.abs(data[o + 1] - seedG) + Math.abs(data[o + 2] - seedB);
-    if (dist > BG_MATCH_THRESHOLD) continue;
-
-    data[o + 3] = 0;
-    const px = idx % width;
-    const py = Math.floor(idx / width);
-    if (px > 0) stack.push(idx - 1);
-    if (px < width - 1) stack.push(idx + 1);
-    if (py > 0) stack.push(idx - width);
-    if (py < height - 1) stack.push(idx + width);
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-  fs.writeFileSync(pngPath, canvas.toBuffer('image/png'));
 }
 
 app.whenReady().then(async () => {
@@ -132,7 +81,6 @@ app.whenReady().then(async () => {
     });
     await new Promise((r) => setTimeout(r, 500));
 
-    await cutBackgroundTransparent(outPath);
     console.log('wrote', outPath);
   }
 
