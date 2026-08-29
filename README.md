@@ -13,7 +13,6 @@ A Windows tray app that shows your Claude usage limits at a glance, in either of
 
 - **Hover** the icon to see the exact percentages and reset times in the tooltip.
 - **Left-click** the icon to open a small popup with an enlarged, more detailed view of the same bars/columns, matching whichever display style is currently selected.
-- **Right-click** the icon for the tray menu: start with Windows (on by default after install, toggleable), show notifications (on by default, toggleable), display style (switches between horizontal and vertical bars, remembered across restarts), open log, about, and quit.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/popup-dark.png">
@@ -21,6 +20,13 @@ A Windows tray app that shows your Claude usage limits at a glance, in either of
 </picture>
 
 Pin the popup open (top-right button) to keep it visible instead of closing when it loses focus, and click Minimize (appears next to Pin once pinned) to shrink it down to just the two bars and their reset time - a lightweight, more transparent readout for keeping an eye on fast-changing usage during a long session without it getting in the way.
+
+- **Right-click** the icon for the tray menu: start with Windows (on by default after install, toggleable), show notifications (on by default, toggleable), display style (switches between horizontal and vertical bars, remembered across restarts), open log, about, and quit.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/tray-menu-dark.png">
+  <img src="docs/tray-menu-light.png" width="260" alt="ClaudeQuota tray menu">
+</picture>
 
 Each bar's empty ("track") color is fixed and just identifies which one is which - blue for the 5-hour window, purple for the 7-day one - it doesn't change with usage. The filled part is colored by how close that window is to its limit: green at 50% and under, amber from 51% to 80%, red at 81% and above. Both use the same thresholds, and a thin outline keeps each bar visible even near empty.
 
