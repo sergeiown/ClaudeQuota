@@ -59,7 +59,12 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 - Windows 10/11.
 - Claude Code CLI installed and logged in (`claude login`).
 
-> **Only use Claude Desktop or claude.ai, never Claude Code?** ClaudeQuota still applies to you - the 5-hour and weekly limits it shows are shared across your whole account, not specific to Claude Code. It just happens to read them from the local login file Claude Code keeps. If your Claude Desktop has a **Code** tab (next to Chat and Cowork), open it and sign in there once - that's all it takes, and you don't need to use it for anything afterward.
+> **Not seeing any numbers?** ClaudeQuota reads your usage from a local login file that only Claude Desktop's **Code** tab or the Claude Code CLI create - not from claude.ai itself.
+>
+> - **Using Claude Desktop?** Switch to the **Code** tab (top of the window, next to *Chat and Cowork*) and sign in there once if asked. You can switch straight back to Chat afterward - you won't need Code again.
+> - **Using claude.ai in a browser only?** That won't work with ClaudeQuota, and can't be made to - a browser has no access to your PC's files. Install [Claude Desktop](https://claude.ai/download) instead, sign in once through its Code tab, and ClaudeQuota will pick it up automatically.
+>
+> Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
 
 ## License
 
