@@ -59,6 +59,8 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 - Windows 10/11.
 - Claude Code CLI installed and logged in (`claude login`).
 
+> **Only use Claude Desktop or claude.ai, never Claude Code?** ClaudeQuota still applies to you - the 5-hour and weekly limits it shows are shared across your whole account, not specific to Claude Code. It just happens to read them from the local login file Claude Code keeps. If your Claude Desktop has a **Code** tab (next to Chat and Cowork), open it and sign in there once - that's all it takes, and you don't need to use it for anything afterward.
+
 ## License
 
 [MIT](LICENSE).
