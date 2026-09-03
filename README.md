@@ -62,6 +62,8 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 > **Not seeing any numbers?** ClaudeQuota reads your usage from a local login file that only Claude Desktop's **Code** tab or the Claude Code CLI create - not from claude.ai itself.
 >
 > - **Using Claude Desktop?** Switch to the **Code** tab (top of the window, next to *Chat and Cowork*) and sign in there once if asked. You can switch straight back to Chat afterward - you won't need Code again.
+>
+>   <img src="docs/claude-desktop-code-tab.png" width="280" alt="Chat and Cowork / Code tabs in Claude Desktop">
 > - **Using claude.ai in a browser only?** That won't work with ClaudeQuota, and can't be made to - a browser has no access to your PC's files. Install [Claude Desktop](https://claude.ai/download) instead, sign in once through its Code tab, and ClaudeQuota will pick it up automatically.
 >
 > Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
