@@ -25,7 +25,6 @@ function normalizeRefreshResponse(body) {
   };
 }
 
-// Not officially documented - verify against scripts/check-refresh.js before relying on it.
 async function refreshAccessToken(refreshToken) {
   let response;
   try {

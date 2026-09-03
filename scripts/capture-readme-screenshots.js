@@ -3,13 +3,6 @@
 
 'use strict';
 
-// Captures the popup for the README, light and dark, using real current
-// usage data. Must run under electron.exe, not plain node:
-//   electron scripts/capture-readme-screenshots.js
-// Captures via capturePage() (real popup window, no OS title bar to crop),
-// then composites onto a plain page-like backdrop per theme, matching how
-// the image will actually sit on a GitHub readme.
-
 const { app, BrowserWindow } = require('electron');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const fs = require('fs');

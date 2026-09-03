@@ -3,9 +3,6 @@
 
 'use strict';
 
-// Windows has no template-image auto-recoloring - the icon is re-rasterized
-// by hand on every theme change using one of these palettes.
-
 const LIGHT = {
   foreground: '#1a1a1a',
   separator: 'rgba(26, 26, 26, 0.6)',

@@ -24,18 +24,12 @@ const STATUS_MESSAGES = {
   offline: 'No connection to api.anthropic.com.',
 };
 
-// Non-happy-path statuses that get a real status icon; anything else (offline,
-// rate-limited) keeps showing the last known fraction and only changes the tooltip.
 const STATUS_ICON_KIND = {
   'missing-credentials': 'missing-credentials',
   'refresh-token-expired': 'missing-credentials',
   'auth-error': 'auth-error',
 };
 
-// Windows scales the tray icon up from whatever we give it (16px at 100%,
-// 20px at 125%, 24px at 150%...) rather than picking a matching multi-DPI
-// representation like macOS does (electron/electron#33044) - rendering
-// fresh at the real current size avoids that upscaling blur entirely.
 function getTraySize() {
   return Math.round(16 * screen.getPrimaryDisplay().scaleFactor);
 }
@@ -44,28 +38,12 @@ function buildNativeImage(renderFn, args) {
   const size = getTraySize();
   const png = renderFn({ ...args, size });
   const image = nativeImage.createFromBuffer(png);
-  // Windows' own "customize notification icons" list shows these at a
-  // fixed larger size regardless of tray DPI - a bigger representation
-  // keeps that view sharp too.
+
   const png32 = renderFn({ ...args, size: 32 });
   image.addRepresentation({ width: 32, height: 32, buffer: png32, scaleFactor: 32 / size });
   return image;
 }
 
-/**
- * @param {object} opts
- * @param {() => boolean} opts.getAutoLaunchEnabled
- * @param {() => void} opts.onToggleAutoLaunch
- * @param {() => boolean} opts.getNotificationsEnabled
- * @param {() => void} opts.onToggleNotifications
- * @param {() => 'bars'|'columns'} opts.getDisplayStyle
- * @param {() => void} opts.onToggleDisplayStyle
- * @param {() => void} opts.onOpenLog
- * @param {() => void} opts.onAbout
- * @param {() => void} opts.onQuit
- * @param {() => void} [opts.onRequestRefresh]
- * @param {boolean} opts.isDark
- */
 function createTrayController({
   getAutoLaunchEnabled,
   onToggleAutoLaunch,
@@ -162,9 +140,7 @@ function createTrayController({
   });
 
   tray.on('click', () => {
-    // Deliberately does not call onRequestRefresh() here - the popup fully
-    // reloads its content on every update, so a refresh landing moments
-    // after opening would repaint it right after it just appeared.
+
     popup.toggle(buildPopupArgs(), tray.getBounds());
   });
 

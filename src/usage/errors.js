@@ -3,7 +3,6 @@
 
 'use strict';
 
-// code: 'MISSING_FILE' | 'MALFORMED' | 'MISSING_REFRESH_TOKEN' | 'REFRESH_TOKEN_EXPIRED'
 class CredentialsError extends Error {
   constructor(code, message) {
     super(message || code);
@@ -12,7 +11,6 @@ class CredentialsError extends Error {
   }
 }
 
-// code: 'INVALID_GRANT' | 'NETWORK' | 'UNKNOWN'
 class RefreshError extends Error {
   constructor(code, message, status) {
     super(message || code);

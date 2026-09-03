@@ -20,9 +20,6 @@ const RENDER_FN_BY_STYLE = {
   columns: renderColumnPreview,
 };
 
-// Loaded once and inlined as a data: URI in every popup render - the popup
-// is a data: URL document, so it can't load a font from a regular file
-// path the way a normal page would.
 const OVERLAY_FONT_BASE64 = fs.readFileSync(
   path.join(__dirname, '..', '..', 'assets', 'fonts', 'Fredoka-SemiBold.woff2')
 ).toString('base64');
@@ -35,16 +32,9 @@ const COLUMNS_WIDTH = 380;
 const COLUMNS_HEIGHT = 540;
 const COLUMN_BLOCK_WIDTH = 160;
 
-// Minimized (pinned + collapsed) mode drops the header, the explanatory
-// notes, the footer and the window-label prefix, and shrinks the
-// capsules themselves - just a glanceable two-capsule readout, not a
-// smaller copy of the full popup.
 const MINI_BAR_IMG_WIDTH = 200;
 const MINI_BAR_IMG_HEIGHT = 56;
-// Narrower columns read fine at the reduced height used elsewhere in mini
-// mode, but a taller column needs more width or the fill level itself
-// gets hard to judge - shorter and a bit wider than a plain scaled-down
-// copy of the full popup's column.
+
 const MINI_COL_IMG_WIDTH = 58;
 const MINI_COL_IMG_HEIGHT = 110;
 const MINI_COLUMN_BLOCK_WIDTH = 120;
@@ -54,15 +44,8 @@ const MINI_BARS_HEIGHT = 200;
 const MINI_COLUMNS_WIDTH = 265;
 const MINI_COLUMNS_HEIGHT = 185;
 
-// Hugs the right edge instead of centering over the tray icon - just
-// enough room left over for a scrollbar, so it reads as a fixed corner
-// readout rather than a popup anchored to one particular icon.
 const MINI_RIGHT_MARGIN = 16;
 
-// Fixed per style - the detail text under each bar comes from a small,
-// known set of app-authored strings, not arbitrary user input, so its
-// height doesn't need to be measured/estimated like the old rotated
-// column label did.
 function computeDimensions({ style, minimized }) {
   const isColumns = style === 'columns';
   if (minimized) {
@@ -130,12 +113,10 @@ function buildHtml({
   const blockOne = buildBlock({
     imgClass: isColumns ? 'col-img' : 'bar-img',
     image: imageOne,
-    // No percent shown while there's no real data - a bold "0%" would read
-    // as a measured value rather than as "unknown".
+
     percentText: hasData ? `5h ${numerator}%` : '5h',
     overlayClass: isColumns ? 'columns-overlay' : 'bars-overlay',
-    // The window-label prefix is dropped in mini mode - there's no room
-    // for it, and the bar's own "5h"/"7d" overlay already says which is which.
+
     resetLine: hasData ? (minimized ? lineOne : `${FIVE_HOUR_LABEL} ${lineOne}`) : lineOne,
     note: showNotes ? FIVE_HOUR_NOTE : null,
   });
@@ -219,11 +200,7 @@ function buildHtml({
     font-family: 'Fredoka', 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    /* Low fill opacity so the bar's own color shows through the letters -
-       a blurred halo would cover a bold glyph's whole stroke, not just its
-       edge, so a real thin stroke outlines the shape instead and leaves
-       the interior actually see-through. A slim top highlight plus a soft
-       drop shadow add the raised, glassy look without darkening the fill. */
+
     color: rgba(255, 255, 255, 0.4);
     -webkit-text-stroke: 1px rgba(0, 0, 0, 0.55);
     text-shadow:
@@ -298,9 +275,6 @@ function positionNearTray(win, trayBounds, dimensions, minimized) {
 
   let x;
   if (minimized) {
-    // A fixed corner readout rather than a popup anchored to one
-    // particular tray icon - hugs the right edge, leaving only enough
-    // room for a scrollbar.
     x = workArea.x + workArea.width - dimensions.width - MINI_RIGHT_MARGIN;
   } else {
     x = Math.round(trayBounds.x + trayBounds.width / 2 - dimensions.width / 2);
@@ -315,9 +289,6 @@ function positionNearTray(win, trayBounds, dimensions, minimized) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
-// Square corners, not a CSS border-radius: a frameless window's actual pixel
-// bounds are always a plain rectangle, so a rounded card drawn inside one
-// reads as a sticker on a square window - a shadow alone avoids that.
 function createPopupController() {
   let win = null;
   let isOpen = false;
@@ -326,10 +297,6 @@ function createPopupController() {
   let lastArgs = null;
   let lastTrayBounds = null;
 
-  // Closing uses opacity + click-through, not hide() or an off-screen
-  // position - both throttle requestAnimationFrame (hide() directly, an
-  // off-screen position via Windows' occlusion detection once combined
-  // with setAlwaysOnTop() on reopen), breaking waitForPaint() below.
   function ensureWindow() {
     if (win && !win.isDestroyed()) return win;
     win = new BrowserWindow({
@@ -341,7 +308,7 @@ function createPopupController() {
       alwaysOnTop: true,
       transparent: true,
       opacity: 0,
-      hasShadow: false, // the card paints its own CSS shadow instead
+      hasShadow: false,
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -357,8 +324,6 @@ function createPopupController() {
 
   ipcMain.on('popup:toggle-pin', async () => {
     isPinned = !isPinned;
-    // Minimize only makes sense while pinned - unpinning always drops back
-    // to the full popup instead of leaving a stray collapsed+unpinned state.
     if (!isPinned) isMinimized = false;
     if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
   });
@@ -395,9 +360,7 @@ function createPopupController() {
   async function openPopup(args, trayBounds) {
     await render(args, trayBounds);
     const w = ensureWindow();
-    // Re-asserted on every open - other apps' own always-on-top windows
-    // could otherwise still end up above a topmost flag that was only
-    // ever set once, back when the window was first created.
+
     w.setAlwaysOnTop(true);
     w.setIgnoreMouseEvents(false);
     if (!w.isVisible()) w.show();

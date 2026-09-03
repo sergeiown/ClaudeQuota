@@ -7,7 +7,6 @@ const { app, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('./logger');
 
-// Never set CLAUDEQUOTA_UPDATE_CHECK_DELAY_MS in production - local testing only.
 const INITIAL_CHECK_DELAY_MS = Number(process.env.CLAUDEQUOTA_UPDATE_CHECK_DELAY_MS) || 45_000;
 const RECHECK_INTERVAL_MS = 5 * 60 * 60_000;
 

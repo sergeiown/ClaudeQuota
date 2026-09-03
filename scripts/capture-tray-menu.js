@@ -3,18 +3,6 @@
 
 'use strict';
 
-// Captures the real tray context menu, light and dark, for the readme.
-// Must run under electron.exe, not plain node:
-//   electron scripts/capture-tray-menu.js
-//
-// The menu is a native OS surface - no webContents to capturePage() - so
-// this does a real screen-region capture (PowerShell/System.Drawing), then
-// crops tightly to the menu card itself (not a fixed pixel guess): this
-// dev environment's desktop behind the menu isn't stable between runs
-// (whatever app/content happens to be there at the time), so a hardcoded
-// crop verified once can easily be wrong the next run. Auto-detecting the
-// card's own bounding box from the capture itself doesn't have that problem.
-
 const { app, Tray, nativeImage, nativeTheme, screen } = require('electron');
 const { execFileSync } = require('child_process');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
@@ -39,20 +27,8 @@ $bmp.Dispose()
   execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script]);
 }
 
-// The menu card is roughly 200x250px (~50,000px) at this machine's DPI -
-// a light-toned blob is reliably just the card (nothing else on a real
-// desktop is both that light and that large), but a dark-toned blob can
-// otherwise merge with an equally-dark app window right behind the tray,
-// growing far past the card's own real size - so candidates get scored by
-// closeness to the expected area instead of picking the largest outright.
 const EXPECTED_CARD_AREA = 50000;
 
-// No seed point needed - scans the whole capture for connected components
-// matching the card's own background tone (near-white for the light menu,
-// near-black for the dark one). The fill within each component can't cross
-// into the (much darker/lighter, by design) text glyphs, but spreads
-// through the blank margin running along the card's whole inner perimeter,
-// so its bounding box still equals the card's true extent.
 function largestCardToneBlob(data, width, height, isDark) {
   const matches = (o) => {
     const r = data[o], g = data[o + 1], b = data[o + 2];
@@ -93,17 +69,9 @@ function largestCardToneBlob(data, width, height, isDark) {
     const w = maxX - minX + 1;
     const h = maxY - minY + 1;
 
-    // A thin, scattered region (a scrollbar track, a sidebar edge) can
-    // rack up a similar pixel count to the card purely by spanning a much
-    // bigger area sparsely - the card itself is a solid rectangle minus
-    // some text notches, so it fills most of its own bounding box.
     const fillRatio = size / (w * h);
     if (fillRatio < 0.7) continue;
 
-    // A slim vertical/horizontal panel edge can be just as solidly filled
-    // as the card while being nothing like its shape - the menu is always
-    // roughly as wide as it is tall, never a thin strip running the height
-    // (or width) of the screen.
     const aspectRatio = Math.max(w, h) / Math.min(w, h);
     if (aspectRatio > 2.5) continue;
 
@@ -143,11 +111,7 @@ app.whenReady().then(async () => {
 
   const display = screen.getPrimaryDisplay();
   const scale = display.scaleFactor;
-  // Detected once from the light run (a near-white blob is unambiguous on
-  // any real desktop) and reused for dark - same menu, same anchor point,
-  // so its size and position on screen don't actually change with theme,
-  // only its colors do, which is exactly what a color-based detector can't
-  // reliably tell apart from an equally-dark app window behind it.
+
   let sharedBounds = null;
 
   for (const isDark of [false, true]) {
@@ -172,14 +136,6 @@ app.whenReady().then(async () => {
     const rawPath = path.join(os.tmpdir(), `tray-menu-raw-${isDark ? 'dark' : 'light'}.png`);
     const outPath = path.join(OUT_DIR, `tray-menu-${isDark ? 'dark' : 'light'}.png`);
 
-    // popUpContextMenu() enters a native modal loop on Windows and doesn't
-    // return to JS until the menu is dismissed - so the capture-then-close
-    // step has to be armed as a timer *before* calling it, not written as
-    // the next line of sequential code after it. Electron still pumps
-    // Node's timers during that nested loop, which is what lets this fire.
-    // popUpContextMenu also defaults to opening at the current mouse
-    // cursor, not the tray icon - an explicit position at least keeps it
-    // near the tray rather than wherever the cursor happens to be.
     await new Promise((resolve) => {
       setTimeout(() => {
         capturePowerShellRegion(0, 0, display.bounds.width * scale, display.bounds.height * scale, rawPath);

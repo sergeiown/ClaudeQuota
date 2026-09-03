@@ -3,15 +3,6 @@
 
 'use strict';
 
-// Renders the popup's HTML in a hidden Electron window and screenshots it.
-// Must run under electron.exe, not plain node. Run with:
-//   electron scripts/verify-popup.js
-// Reuses one window across cases - a freshly created BrowserWindow per case
-// can fail to load a data: URL here.
-// capturePage() only captures the web page's own rendered pixels, not
-// OS-level window chrome (native shadow, DWM corner rounding) - it cannot
-// catch bugs in those, no matter how this test window is configured.
-
 const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const os = require('os');
@@ -43,9 +34,7 @@ const CASES = [
 
 app.whenReady().then(async () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claudequota-popup-preview-'));
-  // frame: false matches the real popup window - a framed test window's
-  // title bar/borders eat into the content area, shrinking it below the
-  // size we asked for and making correctly-sized content clip.
+
   const win = new BrowserWindow({ show: false, frame: false, width: 500, height: 300 });
 
   for (const c of CASES) {

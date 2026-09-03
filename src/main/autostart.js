@@ -8,10 +8,6 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { app } = require('electron');
 
-// Electron keys the Run entry to the AppUserModelID once one is set - users
-// who already had autostart enabled under the older default key name need
-// migrating, or getLoginItemSettings() reports false despite the app still
-// actually autostarting via the stale key.
 const LEGACY_RUN_KEY_NAME = 'electron.app.ClaudeQuota';
 const RUN_KEY_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 
@@ -45,8 +41,6 @@ function firstRunMarkerPath() {
   return path.join(app.getPath('userData'), 'first-run-complete');
 }
 
-// Only sets the initial default on the very first launch after install; never
-// overrides a later manual toggle.
 function enableAutoLaunchOnFirstRun() {
   migrateLegacyAutoLaunchKey();
 

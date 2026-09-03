@@ -3,10 +3,6 @@
 
 'use strict';
 
-// Screenshots an SVG under both light/dark prefers-color-scheme. Must run
-// under electron.exe, not plain node. Run with:
-//   electron scripts/verify-svg-theme.js docs/structure.svg
-
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('fs');
 const os = require('os');

@@ -10,7 +10,6 @@ const path = require('path');
 const { CREDENTIALS_PATH } = require('../main/constants');
 const { CredentialsError } = require('./errors');
 
-// No require('electron') here - keeps this (and scripts/check-usage.js) runnable under plain `node`.
 function getDefaultCacheDir() {
   const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
   return path.join(appData, 'ClaudeQuota');
@@ -63,8 +62,6 @@ async function readParsedCredentialsFile() {
   }
 }
 
-// This app never writes to CREDENTIALS_PATH - it belongs to the `claude` CLI.
-// Retries once on a parse failure in case the CLI is mid-write rotating the file.
 async function readCredentials() {
   let parsed;
   try {

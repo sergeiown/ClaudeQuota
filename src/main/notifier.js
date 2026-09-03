@@ -29,22 +29,12 @@ function notify(windowLabel, key, threshold, usageWindow, isDark, onClick) {
   notification.show();
 }
 
-/**
- * Fires a one-time notification per window (5-hour, 7-day) the first time
- * its utilization crosses 51/81/99/100%. On the very first snapshot seen
- * for a window this session, thresholds already met are marked notified
- * without actually firing - otherwise every app start at, say, 85% usage
- * would fire both the 51% and 81% notifications immediately.
- */
 function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
   const state = {
     fiveHour: { resetsAt: null, notified: new Set() },
     sevenDay: { resetsAt: null, notified: new Set() },
   };
 
-  // The notified set always advances on a real crossing, even while
-  // notifications are turned off - re-enabling them later must not fire a
-  // stale notification for a threshold already passed while muted.
   function checkWindow(label, key, usageWindow) {
     if (!usageWindow) return;
     const entry = state[key];
@@ -55,11 +45,7 @@ function createThresholdNotifier({ onClick, getIsDark, isEnabled } = {}) {
     if (isFirstSnapshot) {
       entry.notified = new Set(THRESHOLDS.filter((t) => usageWindow.utilization >= t));
     } else if (previousResetsAt !== usageWindow.resetsAt && new Date(previousResetsAt).getTime() <= Date.now()) {
-      // Only a genuine rollover - the previous resetsAt actually elapsing -
-      // clears what's notified. The API can return a resetsAt that drifts
-      // slightly between polls of the same still-active window; treating
-      // every such drift as a rollover re-armed (and re-fired) every
-      // threshold on practically every poll.
+
       entry.notified = new Set();
     }
 

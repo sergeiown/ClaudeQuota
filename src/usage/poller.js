@@ -176,7 +176,6 @@ function createUsagePoller({ onSnapshot, onStatus }) {
     schedule(Math.min(nextUsagePollAt, nextTokenRefreshAt) - Date.now());
   }
 
-  // Never bypasses the 180s floor - only skips ahead if it has already elapsed.
   function requestImmediateCheck() {
     if (stopped) return;
     tick();

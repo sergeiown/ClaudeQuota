@@ -3,9 +3,6 @@
 
 'use strict';
 
-// Generates build/icon.ico from build/icon-source.png. Run with:
-//   node scripts/generate-app-icon.js
-
 const fs = require('fs');
 const path = require('path');
 const { createCanvas, loadImage } = require('@napi-rs/canvas');

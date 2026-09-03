@@ -12,13 +12,11 @@ function hhmm(date) {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-// Just the detail line - "ClaudeQuota" itself is a constant title above this.
 function formatHeaderDate(fetchedAt) {
   const d = new Date(fetchedAt || Date.now());
   return `as of ${hhmm(d)} on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Windows silently truncates the tray tooltip past ~127 characters - kept short on purpose.
 function formatTooltipHeader(fetchedAt) {
   const d = new Date(fetchedAt || Date.now());
   return `ClaudeQuota ${hhmm(d)}`;

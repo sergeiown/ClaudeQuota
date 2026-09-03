@@ -34,9 +34,6 @@ function drawBar(ctx, x, y, width, height, percent, trackColor, palette) {
   drawOutline(ctx, x, y, width, height, palette.outline);
 }
 
-// Fills at near-empty percentages are otherwise almost indistinguishable
-// from the taskbar itself against a very dark or very light theme - a thin
-// outline keeps the bar's shape visible regardless of fill level or background.
 function drawOutline(ctx, x, y, width, height, color) {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, width, 1);
@@ -45,14 +42,6 @@ function drawOutline(ctx, x, y, width, height, color) {
   ctx.fillRect(x + width - 1, y, 1, height);
 }
 
-/**
- * @param {object} opts
- * @param {number} opts.numerator 0-100 (5-hour utilization)
- * @param {number} opts.denominator 0-100 (7-day utilization)
- * @param {number} opts.size 16 or 32 (px, square)
- * @param {boolean} opts.isDark
- * @returns {Buffer} PNG
- */
 function renderFractionIcon({ numerator, denominator, size, isDark }) {
   const palette = getPalette(isDark);
   const canvas = createCanvas(size, size);
@@ -88,14 +77,6 @@ function drawColumn(ctx, x, y, width, height, percent, trackColor, palette) {
   drawOutline(ctx, x, y, width, height, palette.outline);
 }
 
-/**
- * @param {object} opts
- * @param {number} opts.numerator 0-100 (5-hour utilization)
- * @param {number} opts.denominator 0-100 (7-day utilization)
- * @param {number} opts.size 16 or 32 (px, square)
- * @param {boolean} opts.isDark
- * @returns {Buffer} PNG
- */
 function renderColumnsIcon({ numerator, denominator, size, isDark }) {
   const palette = getPalette(isDark);
   const canvas = createCanvas(size, size);
@@ -115,8 +96,6 @@ function renderColumnsIcon({ numerator, denominator, size, isDark }) {
 
   return canvas.toBuffer('image/png');
 }
-
-// Larger, anti-aliased rounded-rect renders used only by the popup - the tray icon above stays pixel-snapped for crispness at 16px.
 
 const SUBTLE_RADIUS = 0;
 
@@ -144,13 +123,10 @@ function castRoundedShadow(ctx, x, y, width, height, radius) {
   ctx.fillStyle = '#000';
   ctx.fill();
   ctx.restore();
-  // Only needed to cast the shadow - clear it so the real colors show through.
+
   ctx.clearRect(x, y, width, height);
 }
 
-// The fill colors are saturated and bright, so the same white/black overlay
-// alpha reads much fainter on them than on the pale, near-white track -
-// boosted separately here so both halves look equally glossy.
 const TRACK_GLOSS = { white: 0.4, black: 0.25 };
 const FILL_GLOSS = { white: 0.55, black: 0.35 };
 
@@ -191,7 +167,7 @@ function drawRoundedBar(ctx, x, y, width, height, percent, trackColor, palette) 
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y, filledWidth, height);
   }
-  // Top-to-bottom gloss, one gradient per half so each is tuned to its own color.
+
   drawVerticalGloss(ctx, x, y, filledWidth, height, FILL_GLOSS);
   drawVerticalGloss(ctx, x + filledWidth, y, width - filledWidth, height, TRACK_GLOSS);
   ctx.restore();
@@ -214,15 +190,12 @@ function drawRoundedColumn(ctx, x, y, width, height, percent, trackColor, palett
     ctx.fillStyle = fillColor;
     ctx.fillRect(x, y + height - filledHeight, width, filledHeight);
   }
-  // Left-to-right gloss, one gradient per half so each is tuned to its own color.
+
   drawHorizontalGloss(ctx, x, y, width, height - filledHeight, TRACK_GLOSS);
   drawHorizontalGloss(ctx, x, y + height - filledHeight, width, filledHeight, FILL_GLOSS);
   ctx.restore();
 }
 
-// Single-bar/column previews, one image per stat. Margin is generous so the
-// drop shadow has room to fade before the canvas edge, instead of getting
-// hard-clipped into a visible rectangle.
 const PREVIEW_BAR_WIDTH = 340;
 const PREVIEW_BAR_HEIGHT = 120;
 const PREVIEW_BAR_PILL_HEIGHT = 72;
@@ -261,12 +234,6 @@ function renderColumnPreview({ percent, variant, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
-// Square, unlike the previews above - Windows crops a non-square
-// notification icon to a center square. No opaque backdrop this time: a
-// thin neutral-gray outline traces the bar's full extent instead, so the
-// empty portion stays legible without needing something behind it to
-// composite against, and the same gray reads about equally on light and
-// dark notification chrome.
 const NOTIFICATION_ICON_SIZE = 256;
 const NOTIFICATION_BAR_WIDTH = 192;
 const NOTIFICATION_BAR_HEIGHT = 88;
@@ -296,13 +263,6 @@ const STATUS_PATTERNS = {
   loading: ['000', '000', '000', '000', '101'],
 };
 
-/**
- * @param {object} opts
- * @param {'missing-credentials'|'auth-error'|'loading'} opts.kind
- * @param {number} opts.size
- * @param {boolean} opts.isDark
- * @returns {Buffer} PNG
- */
 function renderStatusIcon({ kind, size, isDark }) {
   const palette = getPalette(isDark);
   const canvas = createCanvas(size, size);

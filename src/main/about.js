@@ -7,7 +7,6 @@ const path = require('path');
 const { app, dialog, shell, nativeImage } = require('electron');
 const { REPO_URL } = require('./constants');
 
-// Must also be listed in electron-builder.yml's `files` to ship in the packaged app.
 const ICON_PATH = path.join(app.getAppPath(), 'build', 'icon-source.png');
 
 async function showAboutDialog() {

@@ -3,10 +3,6 @@
 
 'use strict';
 
-// Generates PNG previews of the tray icon in every state worth eyeballing.
-// Run with:
-//   node scripts/preview-icon.js
-
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

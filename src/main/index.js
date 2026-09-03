@@ -60,7 +60,7 @@ function bootstrap() {
       tray.showSnapshot(snapshot);
     },
     onStatus: (status, detail) => {
-      // Never log tokens themselves - only status codes/messages/bodies.
+
       log.warn('usage poller status', status, detail || '');
       tray.showStatus(status);
     },
