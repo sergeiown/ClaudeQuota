@@ -61,12 +61,18 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 > **Not seeing any numbers?** ClaudeQuota needs the actual Claude Code CLI - a terminal tool, separate from both Claude Desktop and claude.ai - installed and signed in once. Claude Desktop's own **Code** tab looks similar but doesn't create the login file ClaudeQuota reads, even after actually starting a session there, so it's not a substitute; neither is claude.ai in a browser, which has no access to your PC's files at all.
 >
-> - Install [Node.js](https://nodejs.org) if you don't already have it, then in a terminal (PowerShell) run:
->   ```
->   npm install -g @anthropic-ai/claude-code
->   claude login
->   ```
-> - Sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
+> 1. Press **Win**, type `PowerShell`, right-click the result and choose **Run as administrator** (needed to install Node.js system-wide) - approve the Windows prompt that appears.
+> 2. Run:
+>    ```
+>    winget install OpenJS.NodeJS.LTS
+>    ```
+> 3. Close that window and open a new administrator PowerShell the same way (Windows needs a fresh terminal to see the install).
+> 4. Run:
+>    ```
+>    npm install -g @anthropic-ai/claude-code
+>    claude login
+>    ```
+>    and sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
 >
 > Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
 
