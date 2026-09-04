@@ -59,12 +59,14 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 - Windows 10/11.
 - Claude Code CLI installed and logged in (`claude login`).
 
-> **Not seeing any numbers?** ClaudeQuota reads your usage from a local login file that only Claude Desktop's **Code** tab or the Claude Code CLI create - not from claude.ai itself.
+> **Not seeing any numbers?** ClaudeQuota needs the actual Claude Code CLI - a terminal tool, separate from both Claude Desktop and claude.ai - installed and signed in once. Claude Desktop's own **Code** tab looks similar but doesn't create the login file ClaudeQuota reads, even after actually starting a session there, so it's not a substitute; neither is claude.ai in a browser, which has no access to your PC's files at all.
 >
-> - **Using Claude Desktop?** Switch to the **Code** tab (top of the window, next to *Chat and Cowork*). Just opening it isn't enough - type anything in the box at the bottom (even just "hi") and press Enter to actually start a session, since that's the step that creates the login file. You can switch straight back to Chat afterward - you won't need Code again.
->
->   <img src="docs/claude-desktop-code-tab.png" width="280" alt="Chat and Cowork / Code tabs in Claude Desktop">
-> - **Using claude.ai in a browser only?** That won't work with ClaudeQuota, and can't be made to - a browser has no access to your PC's files. Install [Claude Desktop](https://claude.ai/download) instead, sign in once through its Code tab, and ClaudeQuota will pick it up automatically.
+> - Install [Node.js](https://nodejs.org) if you don't already have it, then in a terminal (PowerShell) run:
+>   ```
+>   npm install -g @anthropic-ai/claude-code
+>   claude login
+>   ```
+> - Sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
 >
 > Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
 
