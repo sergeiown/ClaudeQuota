@@ -74,6 +74,14 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 >    ```
 >    and sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
 >
+>    This is what it looks like:
+>
+>    <img src="docs/setup-terminal.png" width="500" alt="Terminal output of npm install and claude auth login">
+>
+>    A browser tab opens for you to sign in - once you approve, it shows this and you can close it:
+>
+>    <img src="docs/setup-browser-success.png" width="380" alt="Claude Code sign-in success page">
+>
 > Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
 
 ## License
