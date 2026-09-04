@@ -57,7 +57,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 ## Requirements
 
 - Windows 10/11.
-- Claude Code CLI installed and logged in (`claude login`).
+- Claude Code CLI installed and logged in (`claude auth login`).
 
 > **Not seeing any numbers?** ClaudeQuota needs the actual Claude Code CLI - a terminal tool, separate from both Claude Desktop and claude.ai - installed and signed in once. Claude Desktop's own **Code** tab looks similar but doesn't create the login file ClaudeQuota reads, even after actually starting a session there, so it's not a substitute; neither is claude.ai in a browser, which has no access to your PC's files at all.
 >
@@ -70,7 +70,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 > 4. Run:
 >    ```
 >    npm install -g @anthropic-ai/claude-code
->    claude login
+>    claude auth login
 >    ```
 >    and sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
 >

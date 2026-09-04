@@ -57,7 +57,7 @@
 ## Вимоги
 
 - Windows 10/11.
-- Встановлений і авторизований Claude Code CLI (`claude login`).
+- Встановлений і авторизований Claude Code CLI (`claude auth login`).
 
 > **Не бачите жодних цифр?** ClaudeQuota потребує саме Claude Code CLI - термінальний інструмент, окремий від Claude Desktop і claude.ai - встановлений і один раз авторизований. Вкладка **Code** в самому Claude Desktop виглядає схоже, але не створює файл логіну, який читає ClaudeQuota, навіть якщо реально почати в ній сесію - це не замінник; так само не підходить claude.ai в браузері, у якого взагалі немає доступу до файлів вашого ПК.
 >
@@ -70,7 +70,7 @@
 > 4. Виконайте:
 >    ```
 >    npm install -g @anthropic-ai/claude-code
->    claude login
+>    claude auth login
 >    ```
 >    і увійдіть тим самим акаунтом, яким користуєтесь у Claude Desktop або claude.ai. Далі реально користуватись Claude Code не потрібно - ClaudeQuota сам підхопить цей логін.
 >
