@@ -3,7 +3,7 @@
 
 'use strict';
 
-const { app, dialog } = require('electron');
+const { app, dialog, BrowserWindow } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const log = require('./logger');
 
@@ -13,6 +13,25 @@ const RECHECK_INTERVAL_MS = 5 * 60 * 60_000;
 let dismissedVersion = null;
 let pendingInstall = false;
 let userRequestedDownload = false;
+let dialogAnchor = null;
+
+function getDialogAnchor() {
+  if (dialogAnchor && !dialogAnchor.isDestroyed()) return dialogAnchor;
+  dialogAnchor = new BrowserWindow({
+    show: false,
+    skipTaskbar: true,
+    frame: false,
+    transparent: true,
+    width: 1,
+    height: 1,
+  });
+  dialogAnchor.setAlwaysOnTop(true, 'screen-saver');
+  return dialogAnchor;
+}
+
+function showTopmostMessageBox(options) {
+  return dialog.showMessageBox(getDialogAnchor(), options);
+}
 
 function initAutoUpdater() {
   if (!app.isPackaged) {
@@ -35,7 +54,7 @@ function initAutoUpdater() {
     log.info('updater: update available', info.version);
     if (dismissedVersion === info.version) return;
 
-    const result = await dialog.showMessageBox({
+    const result = await showTopmostMessageBox({
       type: 'info',
       title: 'Update available',
       message: `ClaudeQuota ${info.version} is available`,
@@ -57,7 +76,7 @@ function initAutoUpdater() {
     log.info('updater: update downloaded', info.version);
     userRequestedDownload = false;
 
-    const result = await dialog.showMessageBox({
+    const result = await showTopmostMessageBox({
       type: 'question',
       title: 'Update ready',
       message: `ClaudeQuota ${info.version} has been downloaded`,
@@ -78,7 +97,7 @@ function initAutoUpdater() {
     log.error('updater: error', err.message);
     if (userRequestedDownload) {
       userRequestedDownload = false;
-      dialog.showMessageBox({
+      showTopmostMessageBox({
         type: 'error',
         title: 'Update failed',
         message: 'Could not download the update',
