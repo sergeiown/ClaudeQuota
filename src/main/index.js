@@ -8,6 +8,7 @@ const { app, nativeTheme, shell } = require('electron');
 const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
 const { createTrayController } = require('./tray');
+const { createAuthFlowController } = require('./auth-flow');
 const { isAutoLaunchEnabled, setAutoLaunchEnabled, enableAutoLaunchOnFirstRun } = require('./autostart');
 const { getDisplayStyle, setDisplayStyle, getNotificationsEnabled, setNotificationsEnabled } = require('./settings');
 const { showAboutDialog } = require('./about');
@@ -37,6 +38,8 @@ function bootstrap() {
 
   enableAutoLaunchOnFirstRun();
 
+  let authFlow = null;
+
   const tray = createTrayController({
     isDark: nativeTheme.shouldUseDarkColors,
     getAutoLaunchEnabled: isAutoLaunchEnabled,
@@ -49,6 +52,14 @@ function bootstrap() {
     onAbout: showAboutDialog,
     onQuit: quitOrInstall,
     onRequestRefresh: () => poller && poller.requestImmediateCheck(),
+    getAction: (kind) => authFlow && authFlow.getAction(kind),
+    onRetryAction: (kind) => authFlow && authFlow.retryAction(kind),
+  });
+
+  authFlow = createAuthFlowController({
+    onStateChange: () => tray.refreshPopupOnly(),
+    onNeedsAttention: () => tray.needsAttention(),
+    onCredentialsChanged: () => poller && poller.requestImmediateCheck(),
   });
 
   poller = createUsagePoller({
@@ -58,11 +69,13 @@ function bootstrap() {
         sevenDay: snapshot.sevenDay && snapshot.sevenDay.utilization,
       });
       tray.showSnapshot(snapshot);
+      authFlow.reset();
     },
     onStatus: (status, detail) => {
 
       log.warn('usage poller status', status, detail || '');
       tray.showStatus(status);
+      authFlow.handleStatus(status);
     },
   });
 
@@ -76,5 +89,6 @@ function bootstrap() {
   app.on('before-quit', () => {
     poller.stop();
     tray.destroy();
+    authFlow.destroy();
   });
 }

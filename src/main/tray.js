@@ -17,8 +17,8 @@ const RENDER_FN_BY_STYLE = {
 };
 
 const STATUS_MESSAGES = {
-  'missing-credentials': "Claude CLI not found. Run `claude login`.",
-  'refresh-token-expired': "Claude CLI session expired. Run `claude login` again.",
+  'missing-credentials': "Claude CLI not found. Run `claude auth login`.",
+  'refresh-token-expired': "Claude CLI session expired. Run `claude auth login` again.",
   'auth-error': 'Anthropic API authentication error.',
   'rate-limited': 'Temporarily rate-limited by the server, will retry later.',
   offline: 'No connection to api.anthropic.com.',
@@ -44,6 +44,8 @@ function buildNativeImage(renderFn, args) {
   return image;
 }
 
+const STALE_DATA_ALLOWED_KINDS = new Set(['offline', 'rate-limited']);
+
 function createTrayController({
   getAutoLaunchEnabled,
   onToggleAutoLaunch,
@@ -55,6 +57,8 @@ function createTrayController({
   onAbout,
   onQuit,
   onRequestRefresh,
+  getAction,
+  onRetryAction,
   isDark,
 }) {
   let currentIsDark = isDark;
@@ -64,7 +68,9 @@ function createTrayController({
   const tray = new Tray(buildNativeImage(renderStatusIcon, { kind: 'loading', isDark: currentIsDark }));
   tray.setToolTip('ClaudeQuota - loading...');
 
-  const popup = createPopupController();
+  const popup = createPopupController({
+    onAction: () => { if (onRetryAction) onRetryAction(lastStatusKind); },
+  });
   const notifier = createThresholdNotifier({
     onClick: () => popup.toggle(buildPopupArgs(), tray.getBounds()),
     getIsDark: () => currentIsDark,
@@ -122,6 +128,7 @@ function createTrayController({
         hasData: true,
       };
     }
+    const action = getAction ? getAction(lastStatusKind) : null;
     return {
       numerator: 0,
       denominator: 0,
@@ -132,6 +139,8 @@ function createTrayController({
       lineOne: STATUS_MESSAGES[lastStatusKind] || 'Loading...',
       lineTwo: '',
       hasData: false,
+      actionLabel: action ? action.label : null,
+      actionDisabled: action ? !!action.disabled : false,
     };
   }
 
@@ -166,14 +175,23 @@ function createTrayController({
   function showStatus(kind) {
     lastStatusKind = kind;
 
-    if ((kind === 'offline' || kind === 'rate-limited') && lastSnapshot) {
+    if (STALE_DATA_ALLOWED_KINDS.has(kind) && lastSnapshot) {
       tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind]}`);
       return;
     }
+    lastSnapshot = null;
 
     const iconKind = STATUS_ICON_KIND[kind] || 'loading';
     tray.setImage(buildNativeImage(renderStatusIcon, { kind: iconKind, isDark: currentIsDark }));
     tray.setToolTip(`ClaudeQuota\n${STATUS_MESSAGES[kind] || kind}`);
+    popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
+  }
+
+  function needsAttention() {
+    popup.open(buildPopupArgs(), tray.getBounds());
+  }
+
+  function refreshPopupOnly() {
     popup.updateIfVisible(buildPopupArgs(), tray.getBounds());
   }
 
@@ -206,7 +224,7 @@ function createTrayController({
     tray.destroy();
   }
 
-  return { showSnapshot, showStatus, refreshTheme, destroy };
+  return { showSnapshot, showStatus, refreshTheme, needsAttention, refreshPopupOnly, destroy };
 }
 
 module.exports = {

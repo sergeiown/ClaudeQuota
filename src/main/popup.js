@@ -86,6 +86,7 @@ function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, not
 
 function buildHtml({
   numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
+  actionLabel, actionDisabled,
 }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
@@ -240,6 +241,20 @@ function buildHtml({
   .pin-btn.pinned svg { transform: rotate(45deg); }
   .minimize-btn { left: 10px; right: auto; }
   .minimize-btn.mini-active { color: ${pinAccent}; }
+  .action-btn {
+    margin-top: 16px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: ${pinAccent};
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
+  .action-btn:disabled { opacity: 0.55; cursor: default; }
 </style>
 </head>
 <body class="${minimized ? 'mini' : ''}">
@@ -254,6 +269,7 @@ function buildHtml({
   </div>` : ''}
   ${content}
   ${showNotes ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
+  ${actionLabel ? `<button class="action-btn" id="actionBtn" ${actionDisabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>` : ''}
   <script>
     document.getElementById('pinBtn').addEventListener('click', () => {
       if (window.popupApi) window.popupApi.togglePin();
@@ -262,6 +278,12 @@ function buildHtml({
     if (minimizeBtn) {
       minimizeBtn.addEventListener('click', () => {
         if (window.popupApi) window.popupApi.toggleMinimize();
+      });
+    }
+    const actionBtn = document.getElementById('actionBtn');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', () => {
+        if (window.popupApi) window.popupApi.triggerAction();
       });
     }
   </script>
@@ -289,7 +311,7 @@ function positionNearTray(win, trayBounds, dimensions, minimized) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
-function createPopupController() {
+function createPopupController({ onAction } = {}) {
   let win = null;
   let isOpen = false;
   let isPinned = false;
@@ -332,6 +354,10 @@ function createPopupController() {
     if (!isPinned) return;
     isMinimized = !isMinimized;
     if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
+  });
+
+  ipcMain.on('popup:action', () => {
+    if (onAction) onAction();
   });
 
   function waitForPaint(w) {
@@ -377,6 +403,14 @@ function createPopupController() {
     await openPopup(args, trayBounds);
   }
 
+  async function open(args, trayBounds) {
+    if (isOpen) {
+      await render(args, trayBounds);
+      return;
+    }
+    await openPopup(args, trayBounds);
+  }
+
   async function updateIfVisible(args, trayBounds) {
     if (isOpen) await render(args, trayBounds);
   }
@@ -389,7 +423,7 @@ function createPopupController() {
     if (win && !win.isDestroyed()) win.destroy();
   }
 
-  return { toggle, updateIfVisible, hide, destroy };
+  return { toggle, open, updateIfVisible, hide, destroy };
 }
 
 module.exports = {

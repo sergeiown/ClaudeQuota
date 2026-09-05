@@ -23,7 +23,11 @@ const CASES = [
   { name: 'bars-tiny', style: 'bars', isDark: false, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true },
   { name: 'columns-tiny', style: 'columns', isDark: false, numerator: 5, denominator: 9, lineOne: 'resets in 4h 50m (23:10)', lineTwo: 'resets in 6d 22h', hasData: true },
   { name: 'bars-full', style: 'bars', isDark: true, numerator: 100, denominator: 100, lineOne: 'resetting now', lineTwo: 'resetting now', hasData: true },
-  { name: 'bars-nodata', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude login`.', lineTwo: '', hasData: false },
+  { name: 'bars-nodata', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude auth login`.', lineTwo: '', hasData: false },
+  { name: 'bars-nodata-install', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude auth login`.', lineTwo: '', hasData: false, actionLabel: 'Install Claude CLI' },
+  { name: 'bars-nodata-installing', style: 'bars', isDark: true, numerator: 0, denominator: 0, lineOne: 'Claude CLI not found. Run `claude auth login`.', lineTwo: '', hasData: false, actionLabel: 'Installing…', actionDisabled: true },
+  { name: 'bars-nodata-login', style: 'bars', isDark: false, numerator: 0, denominator: 0, lineOne: 'Claude CLI session expired. Run `claude auth login` again.', lineTwo: '', hasData: false, actionLabel: 'Log in' },
+  { name: 'bars-nodata-opening', style: 'bars', isDark: true, numerator: 0, denominator: 0, lineOne: 'Claude CLI session expired. Run `claude auth login` again.', lineTwo: '', hasData: false, actionLabel: 'Opening browser…', actionDisabled: true },
   { name: 'bars-pinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true },
   { name: 'bars-unpinned', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: false },
   { name: 'bars-mini-dark', style: 'bars', isDark: true, numerator: 42, denominator: 87, lineOne: LONG_LINE_ONE, lineTwo: LONG_LINE_TWO, hasData: true, pinned: true, minimized: true },
@@ -50,6 +54,8 @@ app.whenReady().then(async () => {
       hasData: c.hasData,
       pinned: c.pinned || false,
       minimized: c.minimized || false,
+      actionLabel: c.actionLabel || null,
+      actionDisabled: c.actionDisabled || false,
     };
     const dimensions = computeDimensions(args);
     win.setBounds({ x: 0, y: 0, width: dimensions.width, height: dimensions.height });
