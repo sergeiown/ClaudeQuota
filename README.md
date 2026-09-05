@@ -57,31 +57,17 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 ## Requirements
 
 - Windows 10/11.
-- Claude Code CLI installed and logged in (`claude auth login`).
 
-> **Not seeing any numbers?** ClaudeQuota needs the actual Claude Code CLI - a terminal tool, separate from both Claude Desktop and claude.ai - installed and signed in once. Claude Desktop's own **Code** tab looks similar but doesn't create the login file ClaudeQuota reads, even after actually starting a session there, so it's not a substitute; neither is claude.ai in a browser, which has no access to your PC's files at all.
->
-> 1. Press **Win**, type `PowerShell`, press Enter to open a terminal.
-> 2. Run:
->    ```
->    winget install Anthropic.ClaudeCode
->    ```
-> 3. Close that window and open a new PowerShell the same way (Windows needs a fresh terminal to see the install).
-> 4. Run:
->    ```
->    claude auth login
->    ```
->    and sign in with the same account you use in Claude Desktop or claude.ai. You don't need to actually use Claude Code for anything afterward - ClaudeQuota picks up the login automatically.
->
->    This is what it looks like:
->
->    <img src="docs/setup-terminal.png" width="500" alt="Terminal output of npm install and claude auth login">
->
->    A browser tab opens for you to sign in - once you approve, it shows this and you can close it:
->
->    <img src="docs/setup-browser-success.png" width="380" alt="Claude Code sign-in success page">
->
-> Tray icon nowhere to be found either way? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check.
+That's it - ClaudeQuota takes care of the rest itself. It needs the Claude Code CLI signed in behind the scenes (a terminal tool, separate from both Claude Desktop and claude.ai - Claude Desktop's own **Code** tab looks similar but doesn't create the login ClaudeQuota reads), but you never have to open a terminal or type a command for it:
+
+- **CLI missing entirely?** The popup opens on its own and asks to install it - one click, no terminal.
+- **CLI installed but not signed in (or the sign-in expired)?** ClaudeQuota signs you in itself - a browser tab opens on its own, no click needed. Just sign in with the same account you use in Claude Desktop or claude.ai.
+
+The browser tab it opens for signing in looks like this, and you can close it once it says so:
+
+<img src="docs/setup-browser-success.png" width="380" alt="Claude Code sign-in success page">
+
+> Tray icon nowhere to be found? Windows sometimes hides new tray icons - click the little **^** arrow near the clock to check. If the popup ever shows a "Log in" or "Install Claude CLI" button, click it and ClaudeQuota takes it from there.
 
 ## License
 
