@@ -60,7 +60,7 @@ Since the endpoint is undocumented and the access token lives for about an hour,
 
 That's it - ClaudeQuota takes care of the rest itself. It needs the Claude Code CLI signed in behind the scenes (a terminal tool, separate from both Claude Desktop and claude.ai - Claude Desktop's own **Code** tab looks similar but doesn't create the login ClaudeQuota reads), but you never have to open a terminal or type a command for it:
 
-- **CLI missing entirely?** The popup opens on its own and asks to install it - one click, no terminal.
+- **CLI missing entirely?** The popup opens on its own and asks to install it - one click, no terminal. This uses `winget`, the installer built into Windows 10 (1809+) and Windows 11 - virtually every up-to-date machine already has it.
 - **CLI installed but not signed in (or the sign-in expired)?** ClaudeQuota signs you in itself - a browser tab opens on its own, no click needed. Just sign in with the same account you use in Claude Desktop or claude.ai.
 
 The browser tab it opens for signing in looks like this, and you can close it once it says so:
