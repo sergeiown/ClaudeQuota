@@ -4,6 +4,7 @@
 'use strict';
 
 const { spawn } = require('child_process');
+const log = require('./logger');
 
 function installClaudeCli() {
   return new Promise((resolve, reject) => {
@@ -21,11 +22,17 @@ function installClaudeCli() {
 }
 
 function runClaudeAuthLogin(exePath) {
-  const child = spawn(exePath, ['auth', 'login'], {
+  // .cmd/.bat shims (npm-global installs) can only run through cmd.exe on Windows -
+  // spawn() silently fails to launch them directly otherwise.
+  const needsCmd = /\.(cmd|bat)$/i.test(exePath);
+  const command = needsCmd ? 'cmd.exe' : exePath;
+  const args = needsCmd ? ['/c', exePath, 'auth', 'login'] : ['auth', 'login'];
+  const child = spawn(command, args, {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,
   });
+  child.on('error', (err) => log.error('cli-installer: failed to start claude auth login', err));
   child.unref();
 }
 

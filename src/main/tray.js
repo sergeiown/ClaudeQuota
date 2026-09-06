@@ -17,8 +17,8 @@ const RENDER_FN_BY_STYLE = {
 };
 
 const STATUS_MESSAGES = {
-  'missing-credentials': "Claude CLI not found. Run `claude auth login`.",
-  'refresh-token-expired': "Claude CLI session expired. Run `claude auth login` again.",
+  'missing-credentials': 'Not signed in yet.',
+  'refresh-token-expired': 'Your sign-in has expired.',
   'auth-error': 'Anthropic API authentication error.',
   'rate-limited': 'Temporarily rate-limited by the server, will retry later.',
   offline: 'No connection to api.anthropic.com.',
