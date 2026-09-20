@@ -69,7 +69,7 @@ function createTrayController({
   tray.setToolTip('ClaudeQuota - loading...');
 
   const popup = createPopupController({
-    onAction: () => { if (onRetryAction) onRetryAction(lastStatusKind); },
+    onAction: (payload) => { if (onRetryAction) onRetryAction(lastStatusKind, payload); },
   });
   const notifier = createThresholdNotifier({
     onClick: () => popup.toggle(buildPopupArgs(), tray.getBounds()),
@@ -139,6 +139,7 @@ function createTrayController({
       lineOne: STATUS_MESSAGES[lastStatusKind] || 'Loading...',
       lineTwo: '',
       hasData: false,
+      actionMode: action ? action.mode : null,
       actionLabel: action ? action.label : null,
       actionDisabled: action ? !!action.disabled : false,
     };

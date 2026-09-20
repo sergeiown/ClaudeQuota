@@ -86,7 +86,7 @@ function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, not
 
 function buildHtml({
   numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
-  actionLabel, actionDisabled,
+  actionMode, actionLabel, actionDisabled,
 }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
@@ -255,6 +255,20 @@ function buildHtml({
     -webkit-app-region: no-drag;
   }
   .action-btn:disabled { opacity: 0.55; cursor: default; }
+  .action-row { margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .action-hint { font-size: 11.5px; color: ${noteColor}; }
+  .action-input {
+    width: 220px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid ${borderColor};
+    background: ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'};
+    color: ${detailColor};
+    font-family: inherit;
+    font-size: 13px;
+    -webkit-app-region: no-drag;
+  }
+  .action-row .action-btn { margin-top: 0; }
 </style>
 </head>
 <body class="${minimized ? 'mini' : ''}">
@@ -269,7 +283,12 @@ function buildHtml({
   </div>` : ''}
   ${content}
   ${showNotes ? `<div class="footer-note">${escapeHtml(FOOTER_NOTE)}</div>` : ''}
-  ${actionLabel ? `<button class="action-btn" id="actionBtn" ${actionDisabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>` : ''}
+  ${actionMode === 'input' ? `
+  <div class="action-row">
+    <div class="action-hint">${escapeHtml(actionLabel)}</div>
+    <input class="action-input" id="actionInput" type="text" autofocus>
+    <button class="action-btn" id="actionBtn">Submit</button>
+  </div>` : actionLabel ? `<button class="action-btn" id="actionBtn" ${actionDisabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>` : ''}
   <script>
     document.getElementById('pinBtn').addEventListener('click', () => {
       if (window.popupApi) window.popupApi.togglePin();
@@ -280,10 +299,16 @@ function buildHtml({
         if (window.popupApi) window.popupApi.toggleMinimize();
       });
     }
+    const actionInput = document.getElementById('actionInput');
     const actionBtn = document.getElementById('actionBtn');
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
-        if (window.popupApi) window.popupApi.triggerAction();
+        if (window.popupApi) window.popupApi.triggerAction(actionInput ? actionInput.value : undefined);
+      });
+    }
+    if (actionInput) {
+      actionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && window.popupApi) window.popupApi.triggerAction(actionInput.value);
       });
     }
   </script>
@@ -356,8 +381,8 @@ function createPopupController({ onAction } = {}) {
     if (isOpen && lastArgs) await render(lastArgs, lastTrayBounds);
   });
 
-  ipcMain.on('popup:action', () => {
-    if (onAction) onAction();
+  ipcMain.on('popup:action', (event, payload) => {
+    if (onAction) onAction(payload);
   });
 
   function waitForPaint(w) {

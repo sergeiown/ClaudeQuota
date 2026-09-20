@@ -19,6 +19,7 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
   let state = 'idle';
   let autoLoginFiredForEpisode = false;
   let watcher = null;
+  let loginController = null;
 
   function setState(next) {
     state = next;
@@ -54,13 +55,21 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
     setState('opening-browser');
     watchCredentials();
     try {
-      runClaudeAuthLogin(exePath);
+      loginController = runClaudeAuthLogin(exePath, {
+        onNeedsCode: () => setState('awaiting-code'),
+      });
     } catch (err) {
       log.error('auth-flow: failed to start claude auth login', err);
     }
     setTimeout(() => {
       if (state === 'opening-browser') setState('idle');
     }, OPENING_BROWSER_DISPLAY_MS);
+  }
+
+  function submitLoginCode(code) {
+    if (!loginController || !code) return;
+    loginController.submitCode(code);
+    setState('idle');
   }
 
   async function triggerInstall() {
@@ -75,16 +84,19 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
   }
 
   function getAction(kind) {
-    if (state === 'confirm-install') return { label: 'Install Claude CLI', disabled: false, run: triggerInstall };
-    if (state === 'installing') return { label: 'Installing…', disabled: true };
-    if (state === 'opening-browser') return { label: 'Opening browser…', disabled: true };
-    if (NEEDS_ACTION_KINDS.has(kind)) return { label: 'Log in', disabled: false, run: triggerLogin };
+    if (state === 'confirm-install') return { mode: 'button', label: 'Install Claude CLI', disabled: false, run: triggerInstall };
+    if (state === 'installing') return { mode: 'button', label: 'Installing…', disabled: true };
+    if (state === 'opening-browser') return { mode: 'button', label: 'Opening browser…', disabled: true };
+    if (state === 'awaiting-code') {
+      return { mode: 'input', label: 'Paste the code from the browser', run: submitLoginCode };
+    }
+    if (NEEDS_ACTION_KINDS.has(kind)) return { mode: 'button', label: 'Log in', disabled: false, run: triggerLogin };
     return null;
   }
 
-  function retryAction(kind) {
+  function retryAction(kind, payload) {
     const action = getAction(kind);
-    if (action && action.run) action.run();
+    if (action && action.run) action.run(payload);
   }
 
   function handleStatus(kind) {
@@ -101,7 +113,7 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
   function reset() {
     autoLoginFiredForEpisode = false;
     stopWatching();
-    if (state !== 'installing') setState('idle');
+    if (state !== 'installing' && state !== 'awaiting-code') setState('idle');
   }
 
   function destroy() {
