@@ -34,12 +34,11 @@ function runClaudeAuthLogin(exePath) {
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
+    // BROWSER=none stops the CLI from also opening its own tab (it respects this
+    // convention, same as many Node CLIs) - we open the URL ourselves below instead,
+    // since the CLI's own attempt is unreliable when spawned this way.
+    env: { ...process.env, BROWSER: 'none' },
   });
-
-  // claude auth login prints the OAuth URL and normally opens it itself, but that
-  // relies on its own child process being able to launch a browser - unreliable when
-  // spawned this way from a packaged, windowsHide'd process. Open it ourselves instead,
-  // parsed straight from the CLI's own "If the browser didn't open, visit: ..." output.
   let opened = false;
   let buffer = '';
   const scanForUrl = (chunk) => {
