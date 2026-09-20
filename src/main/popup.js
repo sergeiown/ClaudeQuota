@@ -419,7 +419,14 @@ function createPopupController({ onAction, onCancel } = {}) {
     lastTrayBounds = trayBounds;
     const fullArgs = { ...args, pinned: isPinned, minimized: isMinimized };
     if (trayBounds) positionNearTray(w, trayBounds, computeDimensions(fullArgs), isMinimized);
-    await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
+    try {
+      await w.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(buildHtml(fullArgs))}`);
+    } catch (err) {
+      // A render superseded by a newer one in-flight aborts the older loadURL - expected
+      // under back-to-back updates (e.g. a snapshot arriving right as auth state changes).
+      if (err.code === 'ERR_ABORTED') return;
+      throw err;
+    }
     await waitForPaint(w);
   }
 
