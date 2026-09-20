@@ -59,6 +59,7 @@ function createTrayController({
   onRequestRefresh,
   getAction,
   onRetryAction,
+  onCancelAction,
   isDark,
 }) {
   let currentIsDark = isDark;
@@ -70,6 +71,7 @@ function createTrayController({
 
   const popup = createPopupController({
     onAction: (payload) => { if (onRetryAction) onRetryAction(lastStatusKind, payload); },
+    onCancel: () => { if (onCancelAction) onCancelAction(lastStatusKind); },
   });
   const notifier = createThresholdNotifier({
     onClick: () => popup.toggle(buildPopupArgs(), tray.getBounds()),
@@ -142,6 +144,7 @@ function createTrayController({
       actionMode: action ? action.mode : null,
       actionLabel: action ? action.label : null,
       actionDisabled: action ? !!action.disabled : false,
+      actionCancelable: action ? !!action.cancel : false,
     };
   }
 

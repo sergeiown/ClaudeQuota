@@ -72,6 +72,18 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
     setState('idle');
   }
 
+  function cancelLogin() {
+    if (loginController && loginController.cancel) {
+      try {
+        loginController.cancel();
+      } catch (err) {
+        log.warn('auth-flow: failed to cancel login process', err.message);
+      }
+    }
+    loginController = null;
+    setState('idle');
+  }
+
   async function triggerInstall() {
     setState('installing');
     try {
@@ -88,7 +100,7 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
     if (state === 'installing') return { mode: 'button', label: 'Installing…', disabled: true };
     if (state === 'opening-browser') return { mode: 'button', label: 'Opening browser…', disabled: true };
     if (state === 'awaiting-code') {
-      return { mode: 'input', label: 'Paste the code from the browser', run: submitLoginCode };
+      return { mode: 'input', label: 'Paste the code from the browser', run: submitLoginCode, cancel: cancelLogin };
     }
     if (NEEDS_ACTION_KINDS.has(kind)) return { mode: 'button', label: 'Log in', disabled: false, run: triggerLogin };
     return null;
@@ -97,6 +109,11 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
   function retryAction(kind, payload) {
     const action = getAction(kind);
     if (action && action.run) action.run(payload);
+  }
+
+  function cancelAction(kind) {
+    const action = getAction(kind);
+    if (action && action.cancel) action.cancel();
   }
 
   function handleStatus(kind) {
@@ -120,7 +137,7 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
     stopWatching();
   }
 
-  return { handleStatus, getAction, retryAction, reset, destroy };
+  return { handleStatus, getAction, retryAction, cancelAction, reset, destroy };
 }
 
 module.exports = { createAuthFlowController };

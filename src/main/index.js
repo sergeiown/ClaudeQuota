@@ -54,6 +54,7 @@ function bootstrap() {
     onRequestRefresh: () => poller && poller.requestImmediateCheck(),
     getAction: (kind) => authFlow && authFlow.getAction(kind),
     onRetryAction: (kind, payload) => authFlow && authFlow.retryAction(kind, payload),
+    onCancelAction: (kind) => authFlow && authFlow.cancelAction(kind),
   });
 
   authFlow = createAuthFlowController({

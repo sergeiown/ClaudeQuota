@@ -78,6 +78,9 @@ function runClaudeAuthLogin(exePath, { onNeedsCode } = {}) {
     submitCode(code) {
       child.stdin.write(`${code.trim()}\n`);
     },
+    cancel() {
+      child.kill();
+    },
   };
 }
 

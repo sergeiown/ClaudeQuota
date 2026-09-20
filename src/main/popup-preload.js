@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('popupApi', {
   togglePin: () => ipcRenderer.send('popup:toggle-pin'),
   toggleMinimize: () => ipcRenderer.send('popup:toggle-minimize'),
   triggerAction: (payload) => ipcRenderer.send('popup:action', payload),
+  cancelAction: () => ipcRenderer.send('popup:cancel-action'),
 });

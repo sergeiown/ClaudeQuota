@@ -86,7 +86,7 @@ function buildBlock({ imgClass, image, percentText, overlayClass, resetLine, not
 
 function buildHtml({
   numerator, denominator, style, isDark, headerTitle, headerDetail, lineOne, lineTwo, hasData, pinned, minimized,
-  actionMode, actionLabel, actionDisabled,
+  actionMode, actionLabel, actionDisabled, actionCancelable,
 }) {
   const renderFn = RENDER_FN_BY_STYLE[style] || renderBarPreview;
   const imageOne = renderFn({ percent: numerator, variant: 'five-hour', isDark }).toString('base64');
@@ -269,6 +269,17 @@ function buildHtml({
     -webkit-app-region: no-drag;
   }
   .action-row .action-btn { margin-top: 0; }
+  .action-cancel {
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: 11.5px;
+    color: ${noteColor};
+    text-decoration: underline;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+  }
 </style>
 </head>
 <body class="${minimized ? 'mini' : ''}">
@@ -288,6 +299,7 @@ function buildHtml({
     <div class="action-hint">${escapeHtml(actionLabel)}</div>
     <input class="action-input" id="actionInput" type="text" autofocus>
     <button class="action-btn" id="actionBtn">Submit</button>
+    ${actionCancelable ? `<button class="action-cancel" id="actionCancelBtn">Cancel</button>` : ''}
   </div>` : actionLabel ? `<button class="action-btn" id="actionBtn" ${actionDisabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>` : ''}
   <script>
     document.getElementById('pinBtn').addEventListener('click', () => {
@@ -309,6 +321,12 @@ function buildHtml({
     if (actionInput) {
       actionInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && window.popupApi) window.popupApi.triggerAction(actionInput.value);
+      });
+    }
+    const actionCancelBtn = document.getElementById('actionCancelBtn');
+    if (actionCancelBtn) {
+      actionCancelBtn.addEventListener('click', () => {
+        if (window.popupApi) window.popupApi.cancelAction();
       });
     }
   </script>
@@ -336,7 +354,7 @@ function positionNearTray(win, trayBounds, dimensions, minimized) {
   win.setBounds({ x, y, width: dimensions.width, height: dimensions.height });
 }
 
-function createPopupController({ onAction } = {}) {
+function createPopupController({ onAction, onCancel } = {}) {
   let win = null;
   let isOpen = false;
   let isPinned = false;
@@ -383,6 +401,10 @@ function createPopupController({ onAction } = {}) {
 
   ipcMain.on('popup:action', (event, payload) => {
     if (onAction) onAction(payload);
+  });
+
+  ipcMain.on('popup:cancel-action', () => {
+    if (onCancel) onCancel();
   });
 
   function waitForPaint(w) {
