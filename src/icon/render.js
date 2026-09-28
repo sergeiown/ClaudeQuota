@@ -287,6 +287,59 @@ function renderStatusIcon({ kind, size, isDark }) {
   return canvas.toBuffer('image/png');
 }
 
+const MENU_ICON_SIZE = 16;
+
+function renderStyleMenuIcon(ctx, isColumns, color) {
+  ctx.fillStyle = color;
+  if (isColumns) {
+    ctx.fillRect(3, 2, 3, 12);
+    ctx.fillRect(10, 2, 3, 12);
+  } else {
+    ctx.fillRect(2, 3, 12, 3);
+    ctx.fillRect(2, 10, 12, 3);
+  }
+}
+
+function renderAboutMenuIcon(ctx, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.arc(8, 8, 6, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(7.2, 6.8, 1.6, 1.6);
+  ctx.fillRect(7.2, 9, 1.6, 3.2);
+}
+
+function renderQuitMenuIcon(ctx, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.arc(8, 8.5, 5, Math.PI * 1.72, Math.PI * 3.28);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(8, 2.5);
+  ctx.lineTo(8, 7.5);
+  ctx.stroke();
+}
+
+const MENU_ICON_RENDERERS = {
+  'style-bars': (ctx, color) => renderStyleMenuIcon(ctx, false, color),
+  'style-columns': (ctx, color) => renderStyleMenuIcon(ctx, true, color),
+  about: renderAboutMenuIcon,
+  quit: renderQuitMenuIcon,
+};
+
+function renderMenuIcon({ kind, isDark }) {
+  const palette = getPalette(isDark);
+  const canvas = createCanvas(MENU_ICON_SIZE, MENU_ICON_SIZE);
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, MENU_ICON_SIZE, MENU_ICON_SIZE);
+  const draw = MENU_ICON_RENDERERS[kind];
+  if (draw) draw(ctx, palette.foreground);
+  return canvas.toBuffer('image/png');
+}
+
 module.exports = {
   renderFractionIcon,
   renderColumnsIcon,
@@ -298,4 +351,5 @@ module.exports = {
   PREVIEW_COLUMN_WIDTH,
   PREVIEW_COLUMN_HEIGHT,
   renderStatusIcon,
+  renderMenuIcon,
 };

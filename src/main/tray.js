@@ -53,7 +53,6 @@ function createTrayController({
   onToggleNotifications,
   getDisplayStyle,
   onToggleDisplayStyle,
-  onOpenLog,
   onAbout,
   onQuit,
   onRequestRefresh,
@@ -102,9 +101,9 @@ function createTrayController({
             showStatus(lastStatusKind);
           }
         },
-        onOpenLog,
         onAbout,
         onQuit,
+        isDark: currentIsDark,
       })
     );
   }
@@ -213,6 +212,7 @@ function createTrayController({
     if (newIsDark === currentIsDark) return;
     currentIsDark = newIsDark;
     redrawIcon();
+    rebuildMenu();
   }
 
   let lastTraySize = getTraySize();

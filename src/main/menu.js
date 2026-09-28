@@ -3,7 +3,12 @@
 
 'use strict';
 
-const { Menu } = require('electron');
+const { Menu, nativeImage } = require('electron');
+const { renderMenuIcon } = require('../icon/render');
+
+function menuIcon(kind, isDark) {
+  return nativeImage.createFromBuffer(renderMenuIcon({ kind, isDark }));
+}
 
 function buildTrayMenu({
   autoLaunchEnabled,
@@ -12,10 +17,11 @@ function buildTrayMenu({
   onToggleNotifications,
   displayStyle,
   onToggleDisplayStyle,
-  onOpenLog,
   onAbout,
   onQuit,
+  isDark,
 }) {
+  const isColumns = displayStyle === 'columns';
   return Menu.buildFromTemplate([
     {
       label: 'Start with Windows',
@@ -30,19 +36,18 @@ function buildTrayMenu({
       click: onToggleNotifications,
     },
     {
-      label: `Style: ${displayStyle === 'columns' ? 'Columns' : 'Bars'}`,
+      label: `Style: ${isColumns ? 'Columns' : 'Bars'}`,
+      icon: menuIcon(isColumns ? 'style-columns' : 'style-bars', isDark),
       click: onToggleDisplayStyle,
     },
     {
-      label: 'Open log',
-      click: onOpenLog,
-    },
-    {
       label: 'About',
+      icon: menuIcon('about', isDark),
       click: onAbout,
     },
     {
       label: 'Quit',
+      icon: menuIcon('quit', isDark),
       click: onQuit,
     },
   ]);
