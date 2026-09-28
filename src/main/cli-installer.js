@@ -54,8 +54,9 @@ function runClaudeAuthLogin(exePath, { onNeedsCode } = {}) {
         shell.openExternal(match[0]);
       }
     }
-    if (/login successful/i.test(buffer)) {
+    if (!finished && /login successful/i.test(buffer)) {
       finished = true;
+      log.info('cli-installer: claude auth login reported success');
     }
     // The OAuth callback usually completes on its own via a local listener - the CLI
     // still always prints this prompt regardless, so only treat it as "needs a code

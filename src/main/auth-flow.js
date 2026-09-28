@@ -53,6 +53,7 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
       return;
     }
     setState('opening-browser');
+    log.info('auth-flow: starting claude auth login', exePath);
     watchCredentials();
     try {
       loginController = runClaudeAuthLogin(exePath, {
@@ -128,6 +129,9 @@ function createAuthFlowController({ onStateChange, onNeedsAttention, onCredentia
   }
 
   function reset() {
+    if (autoLoginFiredForEpisode) {
+      log.info('auth-flow: signed in successfully, usage is flowing again');
+    }
     autoLoginFiredForEpisode = false;
     stopWatching();
     if (state !== 'installing' && state !== 'awaiting-code') setState('idle');

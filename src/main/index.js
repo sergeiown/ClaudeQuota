@@ -3,7 +3,7 @@
 
 'use strict';
 
-const { app, nativeTheme, shell } = require('electron');
+const { app, nativeTheme } = require('electron');
 
 const log = require('./logger');
 const { createUsagePoller } = require('../usage/poller');
@@ -48,7 +48,6 @@ function bootstrap() {
     onToggleNotifications: () => setNotificationsEnabled(!getNotificationsEnabled()),
     getDisplayStyle,
     onToggleDisplayStyle: () => setDisplayStyle(getDisplayStyle() === 'bars' ? 'columns' : 'bars'),
-    onOpenLog: () => shell.openPath(log.transports.file.getFile().path),
     onAbout: showAboutDialog,
     onQuit: quitOrInstall,
     onRequestRefresh: () => poller && poller.requestImmediateCheck(),
