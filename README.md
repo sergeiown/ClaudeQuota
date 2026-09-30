@@ -2,6 +2,7 @@
 
 [![Windows](https://img.shields.io/badge/platform-windows-0078D6?logo=windows&logoColor=white)](https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/sergeiown/ClaudeQuota/blob/master/LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/sergeiown/ClaudeQuota/total)](https://github.com/sergeiown/ClaudeQuota/releases)
 
 [![English](https://img.shields.io/badge/-English-blue)](README.md)
 [![Українська](https://img.shields.io/badge/-%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0-lightgrey)](README.uk.md)
