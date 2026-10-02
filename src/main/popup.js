@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { BrowserWindow, screen, ipcMain } = require('electron');
+const { BrowserWindow, Menu, clipboard, screen, ipcMain } = require('electron');
 const {
   renderBarPreview,
   renderColumnPreview,
@@ -269,6 +269,8 @@ function buildHtml({
     -webkit-app-region: no-drag;
   }
   .action-row .action-btn { margin-top: 0; }
+  .action-buttons { display: flex; gap: 8px; }
+  .action-btn-secondary { background: ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'}; color: ${detailColor}; }
   .action-cancel {
     border: none;
     background: none;
@@ -298,7 +300,10 @@ function buildHtml({
   <div class="action-row">
     <div class="action-hint">${escapeHtml(actionLabel)}</div>
     <input class="action-input" id="actionInput" type="text" autofocus>
-    <button class="action-btn" id="actionBtn">Submit</button>
+    <div class="action-buttons">
+      <button class="action-btn action-btn-secondary" id="pasteBtn">Paste</button>
+      <button class="action-btn" id="actionBtn">Submit</button>
+    </div>
     ${actionCancelable ? `<button class="action-cancel" id="actionCancelBtn">Cancel</button>` : ''}
   </div>` : actionLabel ? `<button class="action-btn" id="actionBtn" ${actionDisabled ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>` : ''}
   <script>
@@ -312,6 +317,14 @@ function buildHtml({
       });
     }
     const actionInput = document.getElementById('actionInput');
+    const pasteBtn = document.getElementById('pasteBtn');
+    if (pasteBtn && actionInput) {
+      pasteBtn.addEventListener('click', async () => {
+        if (!window.popupApi) return;
+        actionInput.value = (await window.popupApi.readClipboard()).trim();
+        actionInput.focus();
+      });
+    }
     const actionBtn = document.getElementById('actionBtn');
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
@@ -359,6 +372,7 @@ function createPopupController({ onAction, onCancel } = {}) {
   let isOpen = false;
   let isPinned = false;
   let isMinimized = false;
+  let contextMenuOpen = false;
   let lastArgs = null;
   let lastTrayBounds = null;
 
@@ -382,10 +396,23 @@ function createPopupController({ onAction, onCancel } = {}) {
       },
     });
     win.on('blur', () => {
-      if (!isPinned) closePopup();
+      if (!isPinned && !contextMenuOpen) closePopup();
+    });
+    win.webContents.on('context-menu', (event, params) => {
+      if (!params.isEditable) return;
+      contextMenuOpen = true;
+      Menu.buildFromTemplate([
+        { role: 'cut', enabled: params.editFlags.canCut },
+        { role: 'copy', enabled: params.editFlags.canCopy },
+        { role: 'paste', enabled: params.editFlags.canPaste },
+        { type: 'separator' },
+        { role: 'selectAll' },
+      ]).popup({ window: win, callback: () => { contextMenuOpen = false; } });
     });
     return win;
   }
+
+  ipcMain.handle('popup:read-clipboard', () => clipboard.readText());
 
   ipcMain.on('popup:toggle-pin', async () => {
     isPinned = !isPinned;
