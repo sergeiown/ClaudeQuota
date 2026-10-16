@@ -24,6 +24,8 @@ const OVERLAY_FONT_BASE64 = fs.readFileSync(
   path.join(__dirname, '..', '..', 'assets', 'fonts', 'Fredoka-SemiBold.woff2')
 ).toString('base64');
 
+const APP_ICON_BASE64 = fs.readFileSync(path.join(__dirname, '..', '..', 'build', 'icon-source.png')).toString('base64');
+
 const TRAY_GAP = 8;
 
 const BARS_WIDTH = 400;
@@ -176,7 +178,8 @@ function buildHtml({
     src: url(data:font/woff2;base64,${OVERLAY_FONT_BASE64}) format('woff2');
   }
   .header { margin-bottom: 14px; text-align: center; }
-  .header-title { font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
+  .header-title { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 17px; font-weight: 700; color: ${titleColor}; line-height: 1.3; }
+  .header-icon { width: 22px; height: 22px; }
   .header-detail { font-size: 12.5px; color: ${detailColor}; line-height: 1.3; margin-top: 2px; }
   .bar-stack { display: flex; flex-direction: column; gap: 20px; }
   body.mini .bar-stack { gap: 4px; }
@@ -291,7 +294,7 @@ function buildHtml({
   ${minimizeButton}
   ${!minimized ? `
   <div class="header">
-    <div class="header-title">${escapeHtml(headerTitle)}</div>
+    <div class="header-title"><img class="header-icon" src="data:image/png;base64,${APP_ICON_BASE64}" alt="">${escapeHtml(headerTitle)}</div>
     ${headerDetail ? `<div class="header-detail">${escapeHtml(headerDetail)}</div>` : ''}
   </div>` : ''}
   ${content}
